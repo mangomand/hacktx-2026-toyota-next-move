@@ -1,0 +1,385 @@
+{
+  "revision": "crown-reveal-2.0",
+  "fields": [
+    {
+      "mesh": "s210_bumper_R_g_s210_body_0",
+      "regionId": null,
+      "reachableVertices": 0,
+      "vertices": 1332,
+      "uvChannel": 0
+    },
+    {
+      "mesh": "s210_body.002_s210_body_0",
+      "regionId": null,
+      "reachableVertices": 0,
+      "vertices": 798,
+      "uvChannel": 0
+    },
+    {
+      "mesh": "s210_body_s210_body_0",
+      "regionId": "left",
+      "reachableVertices": 1063,
+      "vertices": 5500,
+      "uvChannel": 0
+    },
+    {
+      "mesh": "s210_bumper_F_a_s210_body_0",
+      "regionId": "front",
+      "reachableVertices": 1019,
+      "vertices": 2776,
+      "uvChannel": 0
+    },
+    {
+      "mesh": "s210_lip_F_s210_body_0",
+      "regionId": null,
+      "reachableVertices": 0,
+      "vertices": 13909,
+      "uvChannel": 0
+    },
+    {
+      "mesh": "s210_hood_s210_body_0",
+      "regionId": "front",
+      "reachableVertices": 1501,
+      "vertices": 2343,
+      "uvChannel": 0
+    },
+    {
+      "mesh": "s210_trunk_s210_body_0",
+      "regionId": null,
+      "reachableVertices": 0,
+      "vertices": 2623,
+      "uvChannel": 0
+    },
+    {
+      "mesh": "s210_door_FR_s210_body_0",
+      "regionId": null,
+      "reachableVertices": 0,
+      "vertices": 1357,
+      "uvChannel": 0
+    },
+    {
+      "mesh": "s210_door_FL_s210_body_0",
+      "regionId": "left",
+      "reachableVertices": 1125,
+      "vertices": 1371,
+      "uvChannel": 0
+    },
+    {
+      "mesh": "s210_door_RL_s210_body_0",
+      "regionId": "left",
+      "reachableVertices": 1178,
+      "vertices": 1399,
+      "uvChannel": 0
+    },
+    {
+      "mesh": "s210_door_RR_s210_body_0",
+      "regionId": null,
+      "reachableVertices": 0,
+      "vertices": 1408,
+      "uvChannel": 0
+    },
+    {
+      "mesh": "s210_mirror_R_s210_body_0",
+      "regionId": null,
+      "reachableVertices": 0,
+      "vertices": 911,
+      "uvChannel": 0
+    },
+    {
+      "mesh": "s210_mirror_L_s210_body_0",
+      "regionId": null,
+      "reachableVertices": 0,
+      "vertices": 924,
+      "uvChannel": 0
+    },
+    {
+      "mesh": "s210_roof_s210_body_0",
+      "regionId": null,
+      "reachableVertices": 0,
+      "vertices": 242,
+      "uvChannel": 0
+    },
+    {
+      "mesh": "s210_fender_L_s210_body_0",
+      "regionId": "front-left",
+      "reachableVertices": 730,
+      "vertices": 741,
+      "uvChannel": 0
+    },
+    {
+      "mesh": "s210_fender_R_s210_body_0",
+      "regionId": null,
+      "reachableVertices": 0,
+      "vertices": 712,
+      "uvChannel": 0
+    }
+  ],
+  "anchors": [
+    {
+      "id": "front-panel",
+      "regionId": "front",
+      "surface": "body_panel",
+      "meshId": "s210_hood_s210_block_0",
+      "primitiveIndex": 0,
+      "triangleIndex": 680,
+      "triangleVertexIndices": [
+        693,
+        711,
+        722
+      ],
+      "barycentric": [
+        0.30644564663361956,
+        0.4308938520585405,
+        0.26266050130783986
+      ],
+      "surfaceNormal": [
+        -0.007465359754860401,
+        -0.9768532514572144,
+        -0.21378029882907867
+      ],
+      "blenderMetres": [
+        0.3000914454460144,
+        -1.642618179321289,
+        0.9019635319709778
+      ],
+      "gltfMetres": [
+        0.3000914454460144,
+        0.9019635319709778,
+        1.642618179321289
+      ]
+    },
+    {
+      "id": "left-front-door",
+      "regionId": "left",
+      "surface": "body_panel",
+      "meshId": "s210_door_FL_s210_body_0",
+      "primitiveIndex": 0,
+      "triangleIndex": 123,
+      "triangleVertexIndices": [
+        99,
+        100,
+        101
+      ],
+      "barycentric": [
+        0.1898950206670822,
+        0.44808978478219047,
+        0.3620151945507273
+      ],
+      "surfaceNormal": [
+        0.9981579184532166,
+        0.060327112674713135,
+        0.006435965653508902
+      ],
+      "blenderMetres": [
+        0.8799591064453125,
+        -0.33980631828308105,
+        0.7181844115257263
+      ],
+      "gltfMetres": [
+        0.8799591064453125,
+        0.7181844115257263,
+        0.33980631828308105
+      ]
+    },
+    {
+      "id": "rear-left-panel",
+      "regionId": "rear-left",
+      "surface": "body_panel",
+      "meshId": "s210_body_s210_body_0",
+      "primitiveIndex": 0,
+      "triangleIndex": 770,
+      "triangleVertexIndices": [
+        525,
+        304,
+        516
+      ],
+      "barycentric": [
+        0.12902395774860165,
+        0.3584281512940258,
+        0.5125478909573726
+      ],
+      "surfaceNormal": [
+        0.9858096241950989,
+        0.14167508482933044,
+        -0.09004144370555878
+      ],
+      "blenderMetres": [
+        0.8474099040031433,
+        1.7997633218765259,
+        0.8996277451515198
+      ],
+      "gltfMetres": [
+        0.8474099636077881,
+        0.8996277451515198,
+        -1.7997633218765259
+      ]
+    },
+    {
+      "id": "right-side-panel",
+      "regionId": "right",
+      "surface": "body_panel",
+      "meshId": "s210_door_FR_s210_body_0",
+      "primitiveIndex": 0,
+      "triangleIndex": 64,
+      "triangleVertexIndices": [
+        57,
+        62,
+        63
+      ],
+      "barycentric": [
+        0.42295231819562423,
+        0.41680362819376743,
+        0.16024405361060828
+      ],
+      "surfaceNormal": [
+        -0.999691367149353,
+        0.024326832965016365,
+        0.0050493222661316395
+      ],
+      "blenderMetres": [
+        -0.8815727233886719,
+        -0.1998564451932907,
+        0.6993079781532288
+      ],
+      "gltfMetres": [
+        -0.8815727233886719,
+        0.699307918548584,
+        0.1998564898967743
+      ]
+    },
+    {
+      "id": "front-windshield",
+      "regionId": "front",
+      "surface": "windshield",
+      "meshId": "s210_windshield.001_s210_glass_0",
+      "primitiveIndex": 0,
+      "triangleIndex": 42,
+      "triangleVertexIndices": [
+        26,
+        33,
+        25
+      ],
+      "barycentric": [
+        0.0018151581938591899,
+        0.6366234520373256,
+        0.3615613897688152
+      ],
+      "surfaceNormal": [
+        0.013114984147250652,
+        0.8673021197319031,
+        0.49760931730270386
+      ],
+      "blenderMetres": [
+        0.00018512830138206482,
+        -0.5870240926742554,
+        1.2122424840927124
+      ],
+      "gltfMetres": [
+        0.00018513202667236328,
+        1.2122424840927124,
+        0.5870241522789001
+      ]
+    },
+    {
+      "id": "left-front-tire",
+      "regionId": "front-left",
+      "surface": "tire",
+      "meshId": "s210_wheel_18x8_wheel_42a_0",
+      "primitiveIndex": 0,
+      "triangleIndex": 1871,
+      "triangleVertexIndices": [
+        4841,
+        4842,
+        4843
+      ],
+      "barycentric": [
+        0.3656314440860845,
+        0.0,
+        0.6343685559139155
+      ],
+      "surfaceNormal": [
+        0.9646142721176147,
+        0.26295241713523865,
+        -0.019370045512914658
+      ],
+      "blenderMetres": [
+        0.8763052225112915,
+        -1.4006730318069458,
+        0.3728877305984497
+      ],
+      "gltfMetres": [
+        0.8763052225112915,
+        0.3728877305984497,
+        1.4006730318069458
+      ]
+    },
+    {
+      "id": "left-headlight",
+      "regionId": "front-left",
+      "surface": "light",
+      "meshId": "s210_headlightglass_L_s210_glass_0",
+      "primitiveIndex": 0,
+      "triangleIndex": 114,
+      "triangleVertexIndices": [
+        43,
+        74,
+        75
+      ],
+      "barycentric": [
+        0.5124630270325613,
+        0.008504019913332512,
+        0.4790329530541062
+      ],
+      "surfaceNormal": [
+        0.5141890048980713,
+        0.3309025466442108,
+        0.7912731170654297
+      ],
+      "blenderMetres": [
+        0.6511476635932922,
+        -2.004822254180908,
+        0.7285614609718323
+      ],
+      "gltfMetres": [
+        0.6511476635932922,
+        0.7285614609718323,
+        2.004822254180908
+      ]
+    },
+    {
+      "id": "rear-panel",
+      "regionId": "rear",
+      "surface": "body_panel",
+      "meshId": "s210_bumper_R_g_s210_body_0",
+      "primitiveIndex": 0,
+      "triangleIndex": 923,
+      "triangleVertexIndices": [
+        1109,
+        1113,
+        1114
+      ],
+      "barycentric": [
+        0.23434032359913337,
+        0.0007241633573406438,
+        0.764935513043526
+      ],
+      "surfaceNormal": [
+        0.02492961846292019,
+        0.02618240751326084,
+        -0.9993462562561035
+      ],
+      "blenderMetres": [
+        0.00015231235011015087,
+        2.5961055755615234,
+        0.6001600027084351
+      ],
+      "gltfMetres": [
+        0.00015231351426336914,
+        0.6001600027084351,
+        -2.5961055755615234
+      ]
+    }
+  ],
+  "coordinates": "Blender +X vehicle left, -Y front, +Z up; glTF +X vehicle left, +Y up, +Z front; do not reuse normalized heroDefaults coordinates",
+  "note": "Presentation metadata only, not a canonical scan schema. Source parts are illustrative, not observed geometry."
+}

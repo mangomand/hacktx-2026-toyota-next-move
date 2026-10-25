@@ -39,3 +39,19 @@ Additional bounded checks: delayed response A arriving after session B must not 
 ## MVP execution order
 
 Prioritize the deterministic replay path and installable build evidence before broader hardening work. The replay must still preserve canonical contract validation, explicit unknown/unseen regions, and non-diagnostic exterior-observation copy. Security-hardening scenarios outside those core gates are deferred follow-up work and must not displace replay/build validation.
+
+## AR reference rehearsal
+
+On a supported camera-capable device, begin with the live camera as the full-screen primary surface. Verify minimal translucent Cancel/Finish/scan controls and a thin progress indicator. Move around the vehicle and record that white contours/planes build directly over the camera image, remain aligned as the camera moves, and leave unobserved regions neutral. Trigger a low-quality/glare view and verify the retake prompt; move to the next missing region and verify the prompt changes with coverage.
+
+Attempt Finish before required coverage: it must remain unavailable or explain the exact missing/blocked regions. Finish after sufficient coverage and verify a camera-aligned reconstruction transitions into a polished rotatable vehicle view. Tap a surface-anchored finding and verify evidence, confidence, uncertainty, and next action. Reject primitive rounded-box geometry, detached top-down diagrams, floating labels, or findings not anchored to a captured surface.
+
+If the device or simulator cannot support ARKit/RealityKit, switch to the deterministic replay and label the screen `Replay`/`Demo`; capture a separate recording and do not count it as live AR evidence. The flat region map remains an accessibility/debug fallback.
+
+## iPhone 15 Plus camera-baseline rehearsal
+
+Use an iPhone 15 Plus as the primary test device. Record the capability decision: RGB camera frames and camera/IMU world tracking are active. Start the scan and verify guided capture, motion/pose tracking, frame quality, semantic evidence, dynamic next-region prompts, camera-aligned overlays, and vehicle-asset updates.
+
+If a capability signal is unavailable, continue through the baseline camera path. If camera or pose tracking cannot run, switch to the deterministic replay and show a truthful `Replay`/`Demo` label. Never claim evidence, tracking, or coverage that the active path did not produce.
+
+The visual bar remains camera-aligned scan overlays followed by a polished rotatable vehicle; sensing limitations change uncertainty and coverage quality, not the product direction.

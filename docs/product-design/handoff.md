@@ -9,6 +9,8 @@
 - `docs/product-design/wave-2-post-coverage.md` — shortest map → finding → recommendation → human/scenario action, state copy, acceptance criteria, and iOS handoff.
 - `docs/product-design/wave-2-judge-script.md` — 75-second rehearsal path with readout, recovery beats, and acceptance cues.
 - `docs/product-design/vehicle-hero-visual-quality.md` — judge-facing 3D/isometric vehicle quality bar, surface-attached findings, uncertainty treatment, controlled rotation, and asset fallback ladder.
+- `docs/product-design/real-loop-behavior-review.md` — dynamic region prompts, evidence-to-model behavior, and reviewed iOS/Vision usability/spec mismatches.
+- `docs/product-design/ar-scan-behavior-contract.md` — camera-first AR scanning interaction, progressive camera-aligned reconstruction, final-view transition, dynamic copy, acceptance tests, and current implementation mismatches.
 - `docs/product-design/handoff.md` — this bounded handoff.
 
 ## Checks
@@ -37,6 +39,7 @@
 - No iOS/UI files are assigned. Do not start contract-dependent implementation until the coordinator explicitly authorizes Wave 1 after fresh independent review.
 - Wave 2 usability blockers are low-quality recovery, explicit unseen-state presentation, evidence provenance labeling, and restraint around diagnosis/safety claims.
 - Visual quality blocker: the flat top-down labeled outline is debug-only; the judge path needs one polished perspective/isometric hero asset with surface-attached finding pins and bounded rotation.
+- Real-loop blockers: translate quality enums to current-region prompts, make blocked regions retryable, hide raw confidence decimals, and replace fixed/approximate model markers with evidence-anchored surface callouts before judge-facing acceptance.
 - Camera-slice risks are unsafe movement around a vehicle, trunk prompts that imply entering the vehicle, and 3D shell styling that is read as a condition/severity score; the acceptance copy now requires safe skip/block paths, side-positioned trunk capture, and text/pattern labels alongside any color.
 - Synthetic fallback must not turn a missing/failed live capture into a captured region or create an issue without a source-labeled artifact.
 

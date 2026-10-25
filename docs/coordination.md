@@ -208,3 +208,116 @@ Integration checks passed: Vision tests (8), iOS tests (9), SwiftPM CaptureDemo 
 The flat labeled outline is now explicitly debug/accessibility-only. iOS adds a conditional SceneKit hero for iOS builds: a synthetic Toyota-like vehicle assembled from native primitives with body, cabin/windows, wheels, lights, perspective camera, lighting, coverage-driven materials, and anchored issue markers. Unseen surfaces stay neutral gray; partial surfaces use amber; covered surfaces resolve with restrained color. SwiftUI remains the fallback where SceneKit/UIKit are unavailable. Vision's merge reducer now supports clear-frame recovery after an unflagged low-quality frame while keeping glare/motion uncertainty sticky.
 
 Current checks: iOS tests (11), Vision tests (9), SwiftPM CaptureDemo build, Xcode iPhone 17 simulator build, contract validator, Wave 1/2 QA checks, and `git diff --check` pass. A fresh independent 3D review is required before this visual slice is accepted. External USDZ/glTF asset ownership is still open; the current hero is deliberately synthetic and native.
+
+## Operating model v2 and milestone queue — 2026-10-24
+
+The project now runs three persistent workstreams. Leads remain active across milestones; a completed handoff closes only that increment, not ownership. Implementation is routed through the assigned lead threads. Each lead may delegate 2–4 focused children per milestone for implementation, a spike, or a bounded reviewer. The coordinator integrates dependencies, protects file ownership, runs shared checks, and delegates only focused independent reviews from lead results.
+
+### Workstream A — Capture + Perception
+
+- **Lead:** iOS Capture thread.
+- **Owned files:** `ios/`, `docs/modules/ios-capture/`.
+- **Current input:** camera or demo-video decoded frames.
+- **Milestone A1 acceptance:** Start Scan opens a real camera or explicit video fallback; decoded frames reach quality/evidence analysis; no frame existence alone counts as coverage.
+- **Milestone A2 acceptance:** current missing/partial/blocked region drives the next plain-language prompt and updates the 3D state; replay remains deterministic fallback.
+- **Handoff artifact:** iOS handoff with source/provenance, frame adapter, dynamic prompt evidence, tests, and known region-classification limits.
+
+### Workstream B — 3D Experience
+
+- **Lead:** Vision and Reconstruction thread; UX is its product/design partner through the coordinator.
+- **Owned files:** `vision/`, `docs/modules/vision/`, plus any explicitly assigned 3D integration path.
+- **Milestone B1 input:** Capture + Perception decoded frame analysis and canonical region/findings.
+- **Milestone B1 acceptance:** one perspective/isometric hero asset/state model with observed, unknown, and low-confidence rendering semantics; the flat coverage list is never the final judge-facing experience.
+- **Milestone B2 input:** a Vision visible finding with evidence refs.
+- **Milestone B2 acceptance:** stable panel/tire/windshield/light surface anchor and callout payload with provenance, uncertainty, and no-diagnosis text.
+- **Milestone B3 input:** UX copy and interaction direction.
+- **Milestone B3 acceptance:** bounded rotation/reset and finding focus behavior with an accessible linear fallback.
+- **Handoff artifact:** asset/state/anchor contract note plus one hero-scenario fixture/review artifact.
+
+### Workstream C — QA + Demo
+
+- **Lead:** QA and Responsible AI thread.
+- **Owned files:** `docs/quality/`.
+- **Current input:** A/B lead handoffs and the integrated build.
+- **Milestone C1 acceptance:** executable checks prove camera/video provenance, dynamic prompts, quality gating, explicit unknown/partial/blocked states, evidence joins, and no fabricated findings.
+- **Milestone C2 acceptance:** judge rehearsal covers Start Scan → real frame/video ingestion → dynamic prompt → 3D update → anchored finding → one next move, including replay fallback and accessibility recovery.
+- **Handoff artifact:** acceptance report, demo runbook, failure evidence, and release blockers.
+
+### Critical path and integration order
+
+1. A1: real frame ingestion and dynamic prompt input.
+2. B1: 3D state update from A1 output.
+3. B2: anchored visible finding and evidence callout.
+4. B3: UX-controlled rotation/focus and personalized next move seam.
+5. C1/C2: executable QA and judge demo acceptance.
+
+The current concrete blockers are the iOS callback-to-analysis integration evidence, contextual plain-language quality prompts, blocked/retake semantics, camera-anchored 3D finding markers, and a confirmed hero asset owner. Synthetic JSON replay is a deterministic fallback and test fixture; it is not the product's evidence source.
+
+## A2 status update — 2026-10-25
+
+A2 remains in progress. The iOS lead verified the live RGB camera surface on iPhone 15 Plus when available, contextual missing-region prompts, and coverage-gated Finish. The implementation explicitly states that evidence contours require calibration and does not fabricate geometry. The remaining A2 blocker is calibration and camera-aligned evidence contour/progressive geometry rendering; this must be solved before A2 acceptance.
+
+## A2 calibration increment — 2026-10-25
+
+The iOS lead implemented the bounded calibration step: ARSCNView now renders real ARKit feature points as camera-aligned white evidence marks, with explicit evidence-only status and a Reset calibration action. No fabricated vehicle contours, depth, mesh, or surface classification were added. Dynamic prompts, Finish gating, and replay fallback remain intact. A2 still requires physical iPhone 15 Plus validation of alignment and the later transition from feature marks to credible vehicle-surface geometry.
+
+## Responsibility clarification — ARKit versus 3D asset — 2026-10-25
+
+The current capture implementation uses AVFoundation `AVCaptureSession`/`CMSampleBuffer` and a native SceneKit primitive vehicle. ARKit is not integrated yet, and the primitive model is not described as an ARKit failure.
+
+- **A / iOS next increment:** use the iPhone 15 Plus RGB camera plus available motion/pose signals alongside the existing AVFoundation frames. Record device support and replay fallback explicitly; pose signals improve alignment/coverage confidence but do not create the vehicle asset.
+- **B / Vision + 3D next increment:** separately replace the primitive SceneKit vehicle with an approved high-quality USDZ/glTF or AI-generated multi-view vehicle asset, then define stable surface anchors for canonical regions and findings.
+- **C / QA next increment:** add separate checks for ARKit capability/fallback and asset/anchor provenance; do not conflate tracking evidence with model quality.
+
+Dependencies remain ordered: frame ingestion and ARKit signals → region/evidence reasoning → asset surface anchors → finding callout → QA/demo. No lead may claim ARKit-generated geometry or claim a polished asset from tracking signals alone.
+
+## Device baseline: iPhone 15 Plus — 2026-10-25
+
+The primary test device is an iPhone 15 Plus. A2 uses its ordinary RGB camera plus available IMU/world-tracking signals: guided capture, pose/motion signals, frame quality, semantic evidence, dynamic next-region prompts, and 3D vehicle-state updates. When those baseline capabilities are unavailable, the product uses an explicitly labeled replay/demo mode. QA targets an iPhone 15 Plus or equivalent baseline device. The visual north star is unchanged: camera-aligned scan overlays and a polished rotatable vehicle.
+
+## AR scan reference and revised acceptance bar — 2026-10-25
+
+The primary experience is now an AR scan, not a form, static dashboard, flat map, or primitive-car screen. The phone camera fills the screen with restrained translucent Cancel/Finish controls, scan status, and concise movement prompts. ARKit camera/world tracking and feature points may provide pose signals where supported; Vision processes real RGB frame pixels for quality/evidence. Observed geometry is rendered as camera-aligned white contours or simplified planes/volumes; unobserved areas remain absent/neutral. Finish is coverage-gated and explains missing regions when incomplete.
+
+After Finish, the camera-aligned reconstruction transitions to a polished rotatable vehicle asset with surface-anchored findings and tappable evidence/uncertainty/next-action callouts. The flat region list remains accessibility/debug fallback only. Unsupported devices are explicitly labeled replay/demo mode. The resolved Supervisely reference (`https://www.youtube.com/watch?v=TwpyWbaLfZY`) informs camera-aligned point/edge presentation and modular overlays; it is not a substitute for a polished vehicle asset.
+
+Revised critical path: RGB camera/frame ingestion → camera/pose signals and Vision quality/evidence → camera-aligned evidence-only contours → dynamic missing-coverage prompt → coverage-gated Finish → polished rotatable vehicle transition → anchored finding → QA/demo.
+
+## Product-priority execution order — 2026-10-25
+
+Functionality comes first while preserving the visual north star. The current milestone order is fixed:
+
+1. Make the real loop work: camera/video frames → quality/evidence → dynamic next-missing-region guidance → coverage state → 3D observation updates.
+2. Make the 3D asset and surface anchoring credible.
+3. Refine animation, materials, transitions, controls, typography, and other visual polish.
+4. Complete personalized recommendation and final demo rehearsal.
+
+Rounded-box placeholders, flat region diagrams, and generic text-only screens may exist only as debug/accessibility fallbacks. Every implementation handoff must state how it preserves camera-aligned overlays, progressive observed geometry, unseen/neutral areas, and the eventual Tesla-style rotatable vehicle. Visual fidelity remains a deferred acceptance gate, never an optional product direction. The attached AR scan reference and the Supervisely point-cloud reference remain acceptance references for every subsequent milestone.
+
+## AR scan integration review — 2026-10-25
+
+iOS now provides an ARKit camera preview, world-tracking/pose capability reporting, contextual prompts, and coverage-gated Finish with replay fallback. The remaining acceptance blockers are explicit: no camera-aligned white contour/progressive geometry loop yet; Vision does not emit pose/depth/geometry outputs; primitive SceneKit markers remain approximate rather than stable surface anchors; and replay provenance must remain visible on every fallback surface. QA added `docs/quality/ar_capture_acceptance.py` and `docs/quality/fixtures/ar-capture-acceptance.json` to reject these gaps in the demo path.
+
+## Milestone A2/B1 handoffs — 2026-10-25
+
+- **A2 complete from iOS lead:** RGB camera capture, contextual prompts, and camera/world-tracking pose support reporting are separate from SceneKit rendering, with explicit unsupported-device/simulator replay fallback. Swift tests/build pass. Final handoff cleanup remains limited to trailing whitespace and an unused sampled-frame warning.
+- **B1 spike complete from 3D Experience lead:** Vision-owned presentation-only asset manifest, provenance/revision requirements, stable bounded model-space anchors, and asset strategy/review criteria are documented and tested. This does not claim that an approved USDZ/glTF or generated multi-view asset is present; the current primitive remains a temporary fallback.
+
+Next dependency is B2: connect a real visible finding and evidence refs to one stable panel/tire/windshield/light anchor on the approved hero asset. B2 depends on the real A1 frame evidence and asset selection; QA must review provenance and anchor behavior before demo acceptance.
+
+## B2 activation while A2 is under device test — 2026-10-25
+
+- **Vision / 3D Experience lead:** implement the bounded surface-anchor and evidence-backed callout seam in `vision/` and `docs/modules/vision/`. The first slice is one canonical hero region with stable model-space anchoring, provenance, uncertainty, and no-diagnosis text; it must preserve neutral unseen and amber partial states.
+- **QA + Demo lead:** add executable `docs/quality/` checks for the B2 handoff: resolving evidence refs, persistent synthetic/live provenance, anchor determinism, uncertainty copy, and replay labeling. QA must distinguish fixture validation from iPhone 15 Plus runtime proof.
+- **iOS / Capture + Perception lead:** remains owner of A2 device validation and supplies the frame/evidence input contract to B2; no iOS changes are required for this B2 increment.
+
+Integration order is Vision handoff → focused independent review → QA acceptance checks → coordinator review. A2 device testing can proceed in parallel; B2 does not claim a complete reconstruction or replace the camera-first product path.
+
+
+## B2 handoffs — 2026-10-25
+
+- **Vision / 3D Experience:** `FindingCallout` now joins one evidence-backed canonical-region finding to a stable model-space anchor with provenance, uncertainty, and no-diagnosis text. Covered resolves; partial is amber; unseen/blocked remain neutral. Vision tests: 19 passed.
+- **QA + Demo:** added `docs/quality/b2_anchor_checks.py` and `docs/quality/fixtures/b2-anchor-callout.json`; checks pass and explicitly distinguish metadata-only fixture validation from iPhone 15 Plus runtime proof.
+- **A / iOS dependency:** continue A2 device validation only on the RGB camera + motion/pose baseline. Enhanced-sensing and Pro-device branches are out of scope.
+
+B2 now requires one fresh independent verifier, then coordinator integration review.

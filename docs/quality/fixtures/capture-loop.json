@@ -1,0 +1,90 @@
+{
+  "format": "qa-capture-loop-envelope-v1",
+  "scenarioId": "capture-loop-qa-20261024",
+  "qualityGate": {
+    "minSharpness": 0.6,
+    "minExposure": 0.35
+  },
+  "cameraAvailable": {
+    "camera-live": {
+      "mode": "live",
+      "source": "camera",
+      "frames": [
+        {
+          "frameId": "camera-front-001",
+          "regionId": "front",
+          "uri": "camera://session/front/001",
+          "capturedAt": "2026-10-24T00:00:01Z",
+          "sharpness": 0.91,
+          "exposure": 0.82,
+          "gate": "pass"
+        },
+        {
+          "frameId": "camera-rear-left-002",
+          "regionId": "rear-left",
+          "uri": "camera://session/rear-left/002",
+          "capturedAt": "2026-10-24T00:00:02Z",
+          "sharpness": 0.41,
+          "exposure": 0.78,
+          "gate": "fail"
+        }
+      ],
+      "regions": {
+        "front": "covered",
+        "rear-left": "partial",
+        "trunk": "unseen"
+      },
+      "nextPrompt": {
+        "kind": "clearer_view",
+        "regionId": "rear-left",
+        "text": "Move closer and hold steady for a clearer rear-left view."
+      },
+      "findings": [
+        {
+          "id": "camera-front-finding",
+          "regionId": "front",
+          "evidenceRefs": [
+            "camera://session/front/001"
+          ]
+        }
+      ]
+    }
+  },
+  "cameraUnavailable": {
+    "camera-unavailable-replay": {
+      "mode": "synthetic_replay",
+      "source": "replay",
+      "replayArtifact": "ios/replay/replay-scan-session.json",
+      "frames": [
+        {
+          "frameId": "frame-001",
+          "regionId": "front",
+          "uri": "ios/replay/frame-001.json",
+          "capturedAt": "2026-10-24T00:00:00Z",
+          "sharpness": 0.88,
+          "exposure": 0.76,
+          "gate": "pass"
+        }
+      ],
+      "regions": {
+        "front": "covered",
+        "rear-left": "unseen",
+        "trunk": "blocked"
+      },
+      "nextPrompt": {
+        "kind": "alternate_access",
+        "regionId": "trunk",
+        "text": "Use another angle or schedule an inspection for the trunk."
+      },
+      "findings": [
+        {
+          "id": "replay-front-finding",
+          "regionId": "front",
+          "evidenceRefs": [
+            "ios/replay/frame-001.json"
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "blender-nextmove": {
+      "command": "/opt/homebrew/bin/uvx",
+      "args": ["--from", "mcp-for-blender==2.2.4", "mcp-for-blender"],
+      "env": {"BLENDER_HOST": "127.0.0.1", "BLENDER_PORT": "9876", "DISABLE_TELEMETRY": "true"}
+    }
+  }
+}
