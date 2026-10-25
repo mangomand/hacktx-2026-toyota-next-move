@@ -1,0 +1,36 @@
+{
+  "format": "qa-generated-analysis-envelope-v1",
+  "scenarioId": "hazard-demo",
+  "producer": {
+    "module": "VisionCore.VisibleFindingRules",
+    "source": "vision/Sources/VisionCore/VisionCore.swift",
+    "command": "swift test --package-path vision",
+    "inputSession": "ios/replay/replay-scan-session.json"
+  },
+  "findings": [
+    {
+      "id": "hazard-1",
+      "category": "warning_indicator",
+      "severity": "high",
+      "confidence": 0.9,
+      "status": "not_a_diagnosis",
+      "regionId": "front",
+      "description": "Visible warning indicator; requires immediate qualified review.",
+      "evidenceRefs": [
+        "ios/replay/frame-001.json"
+      ]
+    }
+  ],
+  "recommendation": {
+    "nextMove": "schedule_inspection",
+    "rationale": "A visible warning indicator requires human safety review.",
+    "confidence": 0.9,
+    "caveats": [
+      "Exterior imagery cannot assess hidden mechanical condition."
+    ],
+    "basedOn": [
+      "hazard-1"
+    ],
+    "escalation": "safety_review"
+  }
+}

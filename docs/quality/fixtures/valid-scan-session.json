@@ -1,0 +1,108 @@
+{
+  "id": "qa-wave1-replay",
+  "startedAt": "2026-10-24T12:00:00Z",
+  "endedAt": null,
+  "status": "replay",
+  "mode": "synthetic_replay",
+  "regions": [
+    {
+      "regionId": "front",
+      "state": "covered",
+      "quality": "high",
+      "observedAt": "2026-10-24T12:00:01Z",
+      "artifactRefs": [
+        "fixtures/qa/front.jpg"
+      ]
+    },
+    {
+      "regionId": "front-left",
+      "state": "partial",
+      "quality": "low",
+      "observedAt": "2026-10-24T12:00:02Z",
+      "artifactRefs": [
+        "fixtures/qa/front-left.jpg"
+      ]
+    },
+    {
+      "regionId": "left",
+      "state": "unseen",
+      "quality": "unknown",
+      "observedAt": "2026-10-24T12:00:00Z"
+    },
+    {
+      "regionId": "rear-left",
+      "state": "blocked",
+      "quality": "unknown",
+      "observedAt": "2026-10-24T12:00:00Z",
+      "notes": "safe access unavailable"
+    },
+    {
+      "regionId": "rear",
+      "state": "unseen",
+      "quality": "unknown",
+      "observedAt": "2026-10-24T12:00:00Z"
+    },
+    {
+      "regionId": "rear-right",
+      "state": "unseen",
+      "quality": "unknown",
+      "observedAt": "2026-10-24T12:00:00Z"
+    },
+    {
+      "regionId": "right",
+      "state": "unseen",
+      "quality": "unknown",
+      "observedAt": "2026-10-24T12:00:00Z"
+    },
+    {
+      "regionId": "front-right",
+      "state": "unseen",
+      "quality": "unknown",
+      "observedAt": "2026-10-24T12:00:00Z"
+    },
+    {
+      "regionId": "roof",
+      "state": "unseen",
+      "quality": "unknown",
+      "observedAt": "2026-10-24T12:00:00Z"
+    },
+    {
+      "regionId": "interior-front",
+      "state": "unseen",
+      "quality": "unknown",
+      "observedAt": "2026-10-24T12:00:00Z"
+    },
+    {
+      "regionId": "interior-rear",
+      "state": "unseen",
+      "quality": "unknown",
+      "observedAt": "2026-10-24T12:00:00Z"
+    },
+    {
+      "regionId": "trunk",
+      "state": "unseen",
+      "quality": "unknown",
+      "observedAt": "2026-10-24T12:00:00Z"
+    }
+  ],
+  "findingIds": [
+    "finding-visible-1"
+  ],
+  "artifactRefs": [
+    "fixtures/qa/front.jpg"
+  ],
+  "unknownRegions": [
+    "front-left",
+    "left",
+    "rear-left",
+    "rear",
+    "rear-right",
+    "right",
+    "front-right",
+    "roof",
+    "interior-front",
+    "interior-rear",
+    "trunk"
+  ],
+  "schemaVersion": "0.1.0"
+}

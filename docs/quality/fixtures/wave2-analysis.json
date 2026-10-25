@@ -1,0 +1,57 @@
+{
+  "sequence": [
+    "start_scan",
+    "coverage",
+    "replay",
+    "map_findings",
+    "recommendation"
+  ],
+  "map": {
+    "sourceSession": "replay-20261024",
+    "unknownRegions": [
+      "rear-left",
+      "front-right",
+      "interior-rear",
+      "trunk"
+    ]
+  },
+  "findings": [
+    {
+      "id": "finding-rear-left-review",
+      "category": "missing_context",
+      "severity": "unknown",
+      "confidence": 0.42,
+      "status": "needs_review",
+      "regionId": "rear-left",
+      "description": "Low-quality, glare-limited exterior view; visible evidence is insufficient to assess the region.",
+      "evidenceRefs": [
+        "ios/replay/frame-004.json"
+      ],
+      "recommendedCheck": "Request a clearer rear-left view or schedule an in-person inspection."
+    }
+  ],
+  "recommendation": {
+    "id": "recommendation-replay-review",
+    "nextMove": "request_more_views",
+    "rationale": "Several regions remain partial or unseen, and the glare-limited rear-left evidence needs review.",
+    "confidence": 0.42,
+    "caveats": [
+      "Exterior imagery cannot assess hidden mechanical condition."
+    ],
+    "basedOn": [
+      "finding-rear-left-review"
+    ],
+    "escalation": "more_evidence"
+  },
+  "format": "qa-generated-analysis-envelope-v1",
+  "scenarioId": "replay-20261024",
+  "producer": {
+    "module": "VisionCore.SyntheticReplay",
+    "source": "vision/Sources/VisionCore/VisionCore.swift",
+    "command": "swift test --package-path vision",
+    "inputSession": "ios/replay/replay-scan-session.json"
+  },
+  "findingIds": [
+    "finding-rear-left-review"
+  ]
+}

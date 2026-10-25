@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "toyota-next-move/ScanSession/0.1.0",
+  "title": "ScanSession",
+  "type": "object",
+  "required": [
+    "id",
+    "startedAt",
+    "status",
+    "regions",
+    "findingIds",
+    "artifactRefs"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "startedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "endedAt": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "status": {
+      "enum": [
+        "not_started",
+        "in_progress",
+        "complete",
+        "replay"
+      ]
+    },
+    "mode": {
+      "enum": [
+        "live",
+        "synthetic_replay"
+      ]
+    },
+    "regions": {
+      "type": "array",
+      "items": {
+        "$ref": "toyota-next-move/CoverageRegion/0.1.0"
+      },
+      "minItems": 12,
+      "maxItems": 12,
+      "uniqueItems": true
+    },
+    "findingIds": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "artifactRefs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "unknownRegions": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "front",
+          "front-left",
+          "left",
+          "rear-left",
+          "rear",
+          "rear-right",
+          "right",
+          "front-right",
+          "roof",
+          "interior-front",
+          "interior-rear",
+          "trunk"
+        ]
+      }
+    },
+    "schemaVersion": {
+      "const": "0.1.0"
+    }
+  },
+  "additionalProperties": false
+}

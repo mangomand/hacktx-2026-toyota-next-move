@@ -1,0 +1,11 @@
+{
+  "id": "qa-wave1-duplicate",
+  "startedAt": "2026-10-24T12:00:00Z",
+  "status": "replay",
+  "mode": "synthetic_replay",
+  "regions": [
+    {"regionId":"front","state":"unseen","quality":"unknown","observedAt":"2026-10-24T12:00:00Z"},
+    {"regionId":"front","state":"unseen","quality":"unknown","observedAt":"2026-10-24T12:00:00Z"}
+  ],
+  "findingIds": [], "artifactRefs": [], "schemaVersion": "0.1.0"
+}

@@ -1,0 +1,126 @@
+{
+  "artifactRefs" : [
+    "ios\/replay\/README.md"
+  ],
+  "endedAt" : "2026-10-24T00:00:00Z",
+  "findingIds" : [
+
+  ],
+  "id" : "replay-20261024",
+  "mode" : "synthetic_replay",
+  "regions" : [
+    {
+      "artifactRefs" : [
+        "ios\/replay\/frame-001.json"
+      ],
+      "observedAt" : "2026-10-24T00:00:00Z",
+      "quality" : "high",
+      "regionId" : "front",
+      "state" : "covered"
+    },
+    {
+      "artifactRefs" : [
+        "ios\/replay\/frame-002.json"
+      ],
+      "observedAt" : "2026-10-24T00:00:00Z",
+      "quality" : "high",
+      "regionId" : "front-left",
+      "state" : "covered"
+    },
+    {
+      "artifactRefs" : [
+        "ios\/replay\/frame-003.json"
+      ],
+      "observedAt" : "2026-10-24T00:00:00Z",
+      "quality" : "high",
+      "regionId" : "left",
+      "state" : "covered"
+    },
+    {
+      "artifactRefs" : [
+        "ios\/replay\/frame-004.json"
+      ],
+      "observedAt" : "2026-10-24T00:00:00Z",
+      "quality" : "low",
+      "regionId" : "rear-left",
+      "state" : "partial"
+    },
+    {
+      "artifactRefs" : [
+        "ios\/replay\/frame-005.json"
+      ],
+      "observedAt" : "2026-10-24T00:00:00Z",
+      "quality" : "high",
+      "regionId" : "rear",
+      "state" : "covered"
+    },
+    {
+      "artifactRefs" : [
+        "ios\/replay\/frame-006.json"
+      ],
+      "observedAt" : "2026-10-24T00:00:00Z",
+      "quality" : "high",
+      "regionId" : "rear-right",
+      "state" : "covered"
+    },
+    {
+      "artifactRefs" : [
+        "ios\/replay\/frame-007.json"
+      ],
+      "observedAt" : "2026-10-24T00:00:00Z",
+      "quality" : "high",
+      "regionId" : "right",
+      "state" : "covered"
+    },
+    {
+      "artifactRefs" : [
+        "ios\/replay\/frame-008.json"
+      ],
+      "observedAt" : "2026-10-24T00:00:00Z",
+      "quality" : "low",
+      "regionId" : "front-right",
+      "state" : "partial"
+    },
+    {
+      "artifactRefs" : [
+        "ios\/replay\/frame-009.json"
+      ],
+      "observedAt" : "2026-10-24T00:00:00Z",
+      "quality" : "high",
+      "regionId" : "roof",
+      "state" : "covered"
+    },
+    {
+      "artifactRefs" : [
+        "ios\/replay\/frame-010.json"
+      ],
+      "observedAt" : "2026-10-24T00:00:00Z",
+      "quality" : "high",
+      "regionId" : "interior-front",
+      "state" : "covered"
+    },
+    {
+      "notes" : "No evidence captured in deterministic replay.",
+      "observedAt" : "2026-10-24T00:00:00Z",
+      "quality" : "unknown",
+      "regionId" : "interior-rear",
+      "state" : "unseen"
+    },
+    {
+      "notes" : "No evidence captured in deterministic replay.",
+      "observedAt" : "2026-10-24T00:00:00Z",
+      "quality" : "unknown",
+      "regionId" : "trunk",
+      "state" : "unseen"
+    }
+  ],
+  "schemaVersion" : "0.1.0",
+  "startedAt" : "2026-10-24T00:00:00Z",
+  "status" : "replay",
+  "unknownRegions" : [
+    "rear-left",
+    "front-right",
+    "interior-rear",
+    "trunk"
+  ]
+}

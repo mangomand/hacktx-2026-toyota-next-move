@@ -1,0 +1,208 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A10000000000000000000001 /* ../Sources/CaptureDemo/CaptureDemoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* ../Sources/CaptureDemo/CaptureDemoApp.swift */; };
+		A10000000000000000000002 /* ../Sources/CaptureCore/CaptureCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* ../Sources/CaptureCore/CaptureCore.swift */; };
+		A10000000000000000000003 /* ../Sources/CaptureDemo/CapturePresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000005 /* ../Sources/CaptureDemo/CapturePresentation.swift */; };
+		A10000000000000000000004 /* ../../vision/Sources/VisionCore/VisionCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000006 /* ../../vision/Sources/VisionCore/VisionCore.swift */; };
+		A10000000000000000000005 /* libVisionCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A20000000000000000000007 /* libVisionCore.a */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A20000000000000000000001 /* ../Sources/CaptureDemo/CaptureDemoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ../Sources/CaptureDemo/CaptureDemoApp.swift; sourceTree = "<group>"; };
+		A20000000000000000000002 /* ../Sources/CaptureCore/CaptureCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ../Sources/CaptureCore/CaptureCore.swift; sourceTree = "<group>"; };
+		A20000000000000000000003 /* CaptureDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CaptureDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A20000000000000000000004 /* CaptureDemo/Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = CaptureDemo/Info.plist; sourceTree = "<group>"; };
+		A20000000000000000000005 /* ../Sources/CaptureDemo/CapturePresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ../Sources/CaptureDemo/CapturePresentation.swift; sourceTree = "<group>"; };
+		A20000000000000000000006 /* ../../vision/Sources/VisionCore/VisionCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ../../vision/Sources/VisionCore/VisionCore.swift; sourceTree = "<group>"; };
+		A20000000000000000000007 /* libVisionCore.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libVisionCore.a; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A30000000000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000000000000000000005 /* libVisionCore.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A40000000000000000000001 /* ios */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000001 /* ../Sources/CaptureDemo/CaptureDemoApp.swift */,
+				A20000000000000000000002 /* ../Sources/CaptureCore/CaptureCore.swift */,
+				A20000000000000000000005 /* ../Sources/CaptureDemo/CapturePresentation.swift */,
+				A20000000000000000000006 /* ../vision/Sources/VisionCore/VisionCore.swift */,
+				A20000000000000000000004 /* CaptureDemo/Info.plist */,
+			);
+			path = ios;
+			sourceTree = "<group>";
+		};
+		A40000000000000000000002 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000003 /* CaptureDemo.app */,
+				A20000000000000000000007 /* libVisionCore.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A50000000000000000000001 /* CaptureDemo */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A60000000000000000000001 /* Build configuration list for PBXNativeTarget "CaptureDemo" */;
+			buildPhases = (
+				A30000000000000000000002 /* Sources */,
+				A30000000000000000000001 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A90000000000000000000001 /* VisionCore dependency */,
+			);
+			name = CaptureDemo;
+			productName = CaptureDemo;
+			productReference = A20000000000000000000003 /* CaptureDemo.app */;
+			productType = "com.apple.product-type.application";
+		};
+		A50000000000000000000002 /* VisionCore */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A60000000000000000000003;
+			buildPhases = (A30000000000000000000003,);
+			buildRules = ();
+			dependencies = ();
+			name = VisionCore;
+			productName = VisionCore;
+			productReference = A20000000000000000000007;
+			productType = "com.apple.product-type.library.static";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A70000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 2660;
+			};
+			buildConfigurationList = A60000000000000000000002 /* Build configuration list for PBXProject "CaptureDemo" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A40000000000000000000001 /* ios */;
+			productRefGroup = A40000000000000000000002 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A50000000000000000000001 /* CaptureDemo */,
+				A50000000000000000000002 /* VisionCore */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A30000000000000000000002 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000000000000000000001 /* ../Sources/CaptureDemo/CaptureDemoApp.swift in Sources */,
+				A10000000000000000000002 /* ../Sources/CaptureCore/CaptureCore.swift in Sources */,
+				A10000000000000000000003 /* ../Sources/CaptureDemo/CapturePresentation.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A30000000000000000000003 /* VisionCore Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A10000000000000000000004 /* ../vision/Sources/VisionCore/VisionCore.swift in Sources */,); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		A80000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5MVDJUR5U6;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = CaptureDemo/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.toyota.nextmove.capture-demo";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A80000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5MVDJUR5U6;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = CaptureDemo/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.toyota.nextmove.capture-demo";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		A80000000000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				SDKROOT = iphoneos;
+			};
+			name = Debug;
+		};
+		A80000000000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				SDKROOT = iphoneos;
+			};
+			name = Release;
+		};
+		A80000000000000000000005 /* VisionCore Debug */ = {isa = XCBuildConfiguration; buildSettings = {IPHONEOS_DEPLOYMENT_TARGET = 17.0; PRODUCT_NAME = VisionCore; SDKROOT = iphoneos; SWIFT_VERSION = 5.9;}; name = Debug; };
+		A80000000000000000000006 /* VisionCore Release */ = {isa = XCBuildConfiguration; buildSettings = {IPHONEOS_DEPLOYMENT_TARGET = 17.0; PRODUCT_NAME = VisionCore; SDKROOT = iphoneos; SWIFT_VERSION = 5.9;}; name = Release; };
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A60000000000000000000001 /* Build configuration list for PBXNativeTarget "CaptureDemo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A80000000000000000000001 /* Debug */,
+				A80000000000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A60000000000000000000002 /* Build configuration list for PBXProject "CaptureDemo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A80000000000000000000003 /* Debug */,
+				A80000000000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A60000000000000000000003 /* VisionCore configs */ = {isa = XCConfigurationList; buildConfigurations = (A80000000000000000000005, A80000000000000000000006,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		A90000000000000000000001 /* VisionCore dependency */ = {isa = PBXTargetDependency; target = A50000000000000000000002 /* VisionCore */; targetProxy = A90000000000000000000002; };
+		A90000000000000000000002 = {isa = PBXContainerItemProxy; containerPortal = A70000000000000000000001; proxyType = 1; remoteGlobalIDString = A50000000000000000000002; remoteInfo = VisionCore; };
+/* End XCConfigurationList section */
+	};
+	rootObject = A70000000000000000000001 /* Project object */;
+}

@@ -1,0 +1,9 @@
+{
+  "toyota-next-move/ScanSession/0.1.0": "scan-session.schema.json",
+  "toyota-next-move/CoverageRegion/0.1.0": "coverage-region.schema.json",
+  "toyota-next-move/Finding/0.1.0": "finding.schema.json",
+  "toyota-next-move/VehicleProfile/0.1.0": "vehicle-profile.schema.json",
+  "toyota-next-move/Agreement/0.1.0": "agreement.schema.json",
+  "toyota-next-move/Recommendation/0.1.0": "recommendation.schema.json",
+  "toyota-next-move/DemoScenario/0.1.0": "demo-scenario.schema.json"
+}

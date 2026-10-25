@@ -1,0 +1,16 @@
+{
+  "sourceSession": "replay-20261024",
+  "region": {
+    "regionId": "rear-left",
+    "state": "blocked",
+    "quality": "unknown",
+    "observedAt": "2026-10-24T00:00:00Z",
+    "notes": "Safe access unavailable"
+  },
+  "unknownRegions": [
+    "rear-left"
+  ],
+  "expectedEscalation": "more_evidence",
+  "copy": "Unable to assess this region. Request another view or schedule an inspection.",
+  "findings": []
+}

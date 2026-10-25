@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "toyota-next-move/DemoScenario/0.1.0",
+  "title": "DemoScenario",
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "description",
+    "scanSession",
+    "vehicleProfile",
+    "agreement",
+    "expectedNextMove"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "scanSession": {
+      "$ref": "toyota-next-move/ScanSession/0.1.0"
+    },
+    "vehicleProfile": {
+      "$ref": "toyota-next-move/VehicleProfile/0.1.0"
+    },
+    "agreement": {
+      "$ref": "toyota-next-move/Agreement/0.1.0"
+    },
+    "expectedNextMove": {
+      "$ref": "toyota-next-move/Recommendation/0.1.0"
+    },
+    "fixtureRefs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}

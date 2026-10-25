@@ -1,0 +1,3 @@
+{
+  "sequence": ["start_scan", "coverage", "replay", "map_findings", "recommendation"]
+}

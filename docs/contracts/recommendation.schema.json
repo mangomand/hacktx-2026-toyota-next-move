@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "toyota-next-move/Recommendation/0.1.0",
+  "title": "Recommendation",
+  "type": "object",
+  "required": [
+    "id",
+    "nextMove",
+    "rationale",
+    "confidence",
+    "caveats",
+    "basedOn",
+    "escalation"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "nextMove": {
+      "enum": [
+        "schedule_inspection",
+        "request_more_views",
+        "review_with_customer",
+        "explore_upgrade",
+        "continue_current_plan",
+        "no_action_yet"
+      ]
+    },
+    "rationale": {
+      "type": "string"
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "caveats": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "basedOn": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "escalation": {
+      "enum": [
+        "none",
+        "human_review",
+        "more_evidence",
+        "safety_review"
+      ]
+    }
+  },
+  "additionalProperties": false
+}
