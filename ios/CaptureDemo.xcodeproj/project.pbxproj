@@ -18,6 +18,7 @@
 		A10000000000000000000008 /* ../Sources/CaptureCore/MediaCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000A /* ../Sources/CaptureCore/MediaCapture.swift */; };
 		A10000000000000000000009 /* ../Sources/CaptureCore/LiveCaptureLoop.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000B /* ../Sources/CaptureCore/LiveCaptureLoop.swift */; };
 		A1000000000000000000000C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000C /* Assets.xcassets */; };
+		A1000000000000000000000D /* VehicleViewer in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000D /* VehicleViewer */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -34,6 +35,7 @@
 		A2000000000000000000000A /* ../Sources/CaptureCore/MediaCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ../Sources/CaptureCore/MediaCapture.swift; sourceTree = "<group>"; };
 		A2000000000000000000000B /* ../Sources/CaptureCore/LiveCaptureLoop.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ../Sources/CaptureCore/LiveCaptureLoop.swift; sourceTree = "<group>"; };
 		A2000000000000000000000C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = ../CaptureDemo/Assets.xcassets; sourceTree = "<group>"; };
+		A2000000000000000000000D /* VehicleViewer */ = {isa = PBXFileReference; lastKnownFileType = folder; path = ../CaptureDemo/VehicleViewer; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -62,6 +64,7 @@
 				A2000000000000000000000B /* ../Sources/CaptureCore/LiveCaptureLoop.swift */,
 				A20000000000000000000004 /* CaptureDemo/Info.plist */,
 				A2000000000000000000000C /* Assets.xcassets */,
+				A2000000000000000000000D /* VehicleViewer */,
 			);
 			path = ios;
 			sourceTree = "<group>";
@@ -150,7 +153,8 @@
 		};
 		A30000000000000000000003 /* VisionCore Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A10000000000000000000004 /* ../../vision/Sources/VisionCore/VisionCore.swift in Sources */, A10000000000000000000006 /* ../../vision/Sources/VisionCore/FrameAnalysis.swift in Sources */,); runOnlyForDeploymentPostprocessing = 0; };
 		A30000000000000000000004 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (A10000000000000000000007 /* toyota-demo.mov in Resources */,
-				A1000000000000000000000C /* Assets.xcassets in Resources */,); runOnlyForDeploymentPostprocessing = 0; };
+				A1000000000000000000000C /* Assets.xcassets in Resources */,
+				A1000000000000000000000D /* VehicleViewer in Resources */,); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
@@ -158,7 +162,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 8;
 				DEVELOPMENT_TEAM = 5MVDJUR5U6;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = CaptureDemo/Info.plist;
@@ -176,7 +180,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 8;
 				DEVELOPMENT_TEAM = 5MVDJUR5U6;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = CaptureDemo/Info.plist;
