@@ -93,73 +93,73 @@ private struct GuidedCaptureView: View {
                 LinearGradient(colors: [.black.opacity(0.62), .clear], startPoint: .top, endPoint: .bottom)
                     .frame(height: 150)
                     .ignoresSafeArea(edges: .top)
-                VStack(spacing: 0) {
+                VStack(spacing: 12) {
                     HStack {
-                        Button("Cancel") { model.cancelScan() }
+                        Button { model.cancelScan() } label: { Image(systemName: "xmark") }
                             .accessibilityLabel("Cancel scan")
                         Spacer()
-                        Button("Finish") { model.finishScan() }
+                        Button { model.finishScan() } label: { Image(systemName: "checkmark") }
                             .disabled(model.coveredCount == 0)
                             .accessibilityLabel(model.coveredCount == 0 ? "Finish unavailable until a view is captured" : "Finish scan")
                     }
                     .font(.headline)
                     .padding(.horizontal, 20)
                     .padding(.top, 8)
+                    GuidancePill(message: model.scanMessage)
+                        .padding(.horizontal, 16)
                     Spacer()
                 }
                 VStack(spacing: 12) {
                     Spacer()
-                    if let step = model.nextGuideStep {
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
-                                Image(systemName: "location.fill")
-                                Text(step.title).font(.headline)
-                                Spacer()
-                                Text("\(model.coveredCount)/12").font(.subheadline.monospacedDigit())
-                            }
-                            Text(step.instruction).font(.body)
-                            Text(model.scanMessage)
-                                .font(.body.weight(.medium))
-                                .foregroundStyle(.white.opacity(0.92))
-                                .id(model.scanMessage)
-                                .transition(.opacity.combined(with: .move(edge: .bottom)))
-                                .animation(.easeInOut(duration: 0.2), value: model.scanMessage)
-                            HStack {
-                                Button(model.isPaused ? "Resume" : "Pause") { model.togglePause() }
-                                Button("Retake") { model.retakeCurrent() }
-                                Button("Skip") { model.skipCurrent() }
-                            }
-                            .buttonStyle(.bordered)
-                            .font(.subheadline)
-                            if !model.cameraAvailable {
-                                Button("Use video replay") { model.useReplayFallback(); model.showReplay() }
-                                    .buttonStyle(.borderedProminent)
-                            }
-                        }
-                        .padding(16)
-                        .background(.ultraThinMaterial)
-                        .clipShape(RoundedRectangle(cornerRadius: 22))
-                        .padding(.horizontal, 16)
-                    }
-                    VehicleCoverageMap(progress: model.progress)
+                    VehicleCoverageMap(progress: model.progress, compact: true)
                         .frame(height: min(180, proxy.size.height * 0.22))
                         .padding(.horizontal, 28)
                         .accessibilityLabel("3D vehicle progress indicator")
                     HStack {
-                        Image(systemName: "gearshape")
-                        Text(model.evidenceProvenance)
-                        Spacer()
-                        Text("Move slowly around the vehicle")
+                        Button { model.togglePause() } label: { Image(systemName: model.isPaused ? "play.fill" : "pause.fill") }
+                            .accessibilityLabel(model.isPaused ? "Resume scan" : "Pause scan")
+                        Button { model.retakeCurrent() } label: { Image(systemName: "arrow.counterclockwise") }
+                            .accessibilityLabel("Retake current view")
+                        Button { model.skipCurrent() } label: { Image(systemName: "forward.end.fill") }
+                            .accessibilityLabel("Skip current view")
+                        if !model.cameraAvailable {
+                            Button { model.useReplayFallback(); model.showReplay() } label: { Image(systemName: "film") }
+                                .accessibilityLabel("Use video replay")
+                        }
                     }
-                    .font(.caption)
-                    .foregroundStyle(.white.opacity(0.78))
-                    .padding(.horizontal, 24)
+                    .buttonStyle(.bordered)
+                    .font(.subheadline)
                     .padding(.bottom, 12)
                 }
             }
         }
         .foregroundStyle(.white)
         .preferredColorScheme(.dark)
+    }
+}
+
+private struct GuidancePill: View {
+    let message: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: "sparkles").accessibilityHidden(true)
+            Text(message)
+                .font(.subheadline.weight(.semibold))
+                .lineLimit(2)
+                .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .foregroundStyle(.white)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(.ultraThinMaterial)
+        .clipShape(Capsule())
+        .overlay(Capsule().stroke(.white.opacity(0.2), lineWidth: 1))
+        .shadow(color: .black.opacity(0.22), radius: 12, y: 5)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Live guidance")
+        .accessibilityValue(message)
     }
 }
 
@@ -407,6 +407,7 @@ private struct LiveCapturePreview: UIViewRepresentable {
 private struct VehicleCoverageMap: View {
     let progress: CaptureProgress
     var findings: [PresentationFinding] = []
+    var compact = false
     @State private var baseRotation: Double = 0
     @State private var dragRotation: Double = 0
     var body: some View {
@@ -414,7 +415,7 @@ private struct VehicleCoverageMap: View {
         VStack(spacing: 4) {
             Group {
 #if canImport(WebKit)
-                VehicleGLBView(progress: progress).frame(maxWidth: .infinity)
+                VehicleGLBView(progress: progress, compact: compact).frame(maxWidth: .infinity)
 #else
                 SceneKitVehicleView(progress: progress, findings: findings)
 #endif
@@ -428,18 +429,22 @@ private struct VehicleCoverageMap: View {
                         baseRotation += Double(value.translation.width) * 0.42
                         dragRotation = 0
                     })
-            Text("Drag to rotate").font(.caption2).foregroundStyle(.white.opacity(0.62))
+            if !compact {
+                Text("Drag to rotate").font(.caption2).foregroundStyle(.white.opacity(0.62))
+            }
         }
 #else
         GeometryReader { proxy in
             ZStack {
                 RoundedRectangle(cornerRadius: 55).fill(Color.gray.opacity(0.34)).overlay(RoundedRectangle(cornerRadius: 55).stroke(Color.white.opacity(0.35), lineWidth: 2)).rotation3DEffect(.degrees(8), axis: (x: 1, y: 0, z: 0))
                 RoundedRectangle(cornerRadius: 30).fill(Color.gray.opacity(0.2)).frame(width: proxy.size.width * 0.34, height: proxy.size.height * 0.62)
-                ForEach(CaptureRegion.allCases, id: \.self) { region in
-                    let position = mapPosition(region, in: proxy.size)
-                    Text(label(for: region)).font(.caption2.bold()).foregroundStyle(.white).padding(6)
-                        .background(color(for: progress[region])).clipShape(Capsule()).position(position)
-                        .accessibilityLabel("\(region.rawValue): \(progress[region].rawValue)")
+                if !compact {
+                    ForEach(CaptureRegion.allCases, id: \.self) { region in
+                        let position = mapPosition(region, in: proxy.size)
+                        Text(label(for: region)).font(.caption2.bold()).foregroundStyle(.white).padding(6)
+                            .background(color(for: progress[region])).clipShape(Capsule()).position(position)
+                            .accessibilityLabel("\(region.rawValue): \(progress[region].rawValue)")
+                    }
                 }
             }.padding(32)
         }
@@ -488,9 +493,15 @@ private struct SceneKitVehicleView: UIViewRepresentable {
 /// of substituting the old rounded-box SceneKit placeholder.
 private struct VehicleGLBView: UIViewRepresentable {
     let progress: CaptureProgress
+    let compact: Bool
 
     func makeUIView(context: Context) -> WKWebView {
-        let view = WKWebView(frame: .zero, configuration: WKWebViewConfiguration())
+        let configuration = WKWebViewConfiguration()
+        if compact {
+            let script = WKUserScript(source: "const s=document.createElement('style');s.textContent='header,.controls,#state,footer,#anchor,#loading,#error{display:none!important}';document.documentElement.appendChild(s);", injectionTime: .atDocumentEnd, forMainFrameOnly: true)
+            configuration.userContentController.addUserScript(script)
+        }
+        let view = WKWebView(frame: .zero, configuration: configuration)
         view.isOpaque = false
         view.backgroundColor = .clear
         view.scrollView.isScrollEnabled = false

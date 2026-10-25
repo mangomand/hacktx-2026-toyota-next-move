@@ -313,21 +313,22 @@ final class CapturePresentationModel: ObservableObject {
             setScanMessage("This view was not saved. Hold steady and retry.")
             return
         }
+        let generatedGuidance = VehicleGuidance.actionable(from: observation)
         if !newRegions.isEmpty {
             updateGuide()
             let names = newRegions.map { CaptureGuide.step(for: $0).title }.sorted().joined(separator: ", ")
             captureStatus = "Recorded \(names). \(nextGuideStep?.instruction ?? "All requested areas have observations.")"
-            setScanMessage(nextGuideStep.map { "\($0.title): \($0.instruction)" } ?? "Scan complete. You can finish.")
+            setScanMessage(generatedGuidance ?? (nextGuideStep.map { "\($0.title): \($0.instruction)" } ?? "Scan complete. You can finish."))
         } else if observation.usability != .unusable && !candidates.isEmpty && candidates.allSatisfy({ progress[$0] == .covered }) {
             captureStatus = nextGuideStep?.instruction ?? "All required areas have observations. You can finish the scan."
-            setScanMessage(nextGuideStep.map { "\($0.title): \($0.instruction)" } ?? "Scan complete. You can finish.")
+            setScanMessage(generatedGuidance ?? (nextGuideStep.map { "\($0.title): \($0.instruction)" } ?? "Scan complete. You can finish."))
         } else if !candidates.isEmpty && observation.usability != .unusable {
             captureStatus = "\(observation.guidance) Hold this view briefly to confirm it."
-            setScanMessage("Hold steady to confirm this view.")
+            setScanMessage(generatedGuidance ?? "Hold steady to confirm this view.")
         } else if !observation.vehiclePresent {
             setScanMessage("Move closer and keep the vehicle in view.")
         } else if observation.usability == .limited {
-            setScanMessage("Move to better light and hold steady.")
+            setScanMessage(generatedGuidance ?? "Move to better light and hold steady.")
         } else { captureStatus = observation.guidance }
         if observation.usability == .unusable {
             setScanMessage("Move to better light and hold steady.")
@@ -347,7 +348,12 @@ final class CapturePresentationModel: ObservableObject {
         }
     }
 
-    func togglePause() { invalidatePerception(); isPaused.toggle(); captureStatus = isPaused ? "Paused. Stay still before moving." : "Resumed. Follow the prompt before moving." }
+    func togglePause() {
+        invalidatePerception()
+        isPaused.toggle()
+        captureStatus = isPaused ? "Paused. Stay still before moving." : "Resumed. Follow the prompt before moving."
+        setScanMessage(isPaused ? "Paused. Resume when you are stationary." : "Point the camera at the vehicle.")
+    }
     func skipCurrent() { guard let step = nextGuideStep else { return }; progress.markBlocked(step.region); captureStatus = "Skipped \(step.title); marked blocked. You can revisit it later."; updateGuide() }
     func retakeCurrent() { captureStatus = "Retake ready. Reframe \(nextGuideStep?.title ?? "this view") and capture again." }
     func lowerPhone() { captureStatus = "Lower the phone before walking or opening a door." }

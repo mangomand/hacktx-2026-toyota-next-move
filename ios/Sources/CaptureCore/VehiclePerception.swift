@@ -52,6 +52,21 @@ public struct PerceptionRequest: Encodable, Sendable {
     public init(frameID: String, jpeg: Data) { self.frameID = frameID; imageBase64 = jpeg.base64EncodedString() }
 }
 
+public enum VehicleGuidance {
+    /// Returns model guidance suitable for the live callout.
+    /// App-owned prompts remain responsible for no-vehicle and unusable states.
+    public static func actionable(from observation: VehicleObservation) -> String? {
+        guard observation.isValid,
+              observation.vehiclePresent,
+              observation.usability != .unusable else { return nil }
+        let message = observation.guidance
+            .split(whereSeparator: { $0.isNewline })
+            .joined(separator: " ")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return message.isEmpty ? nil : message
+    }
+}
+
 #if canImport(CoreImage) && canImport(CoreVideo)
 import CoreImage
 import CoreVideo
