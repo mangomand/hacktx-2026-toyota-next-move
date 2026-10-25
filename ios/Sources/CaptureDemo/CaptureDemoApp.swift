@@ -591,94 +591,167 @@ private struct VehicleGLBView: UIViewRepresentable {
 }
 #endif
 
-private struct CoverageList: View {
+private struct ResultsView: View {
     @ObservedObject var model: CapturePresentationModel
-    let title: String
+    @State private var leaseChoice = "Leased"
+    @State private var incomeChoice = "$50–100k"
+    @State private var accidentChoice = "None"
+    @State private var mileage = ""
+    @State private var showSheet = false
+    @State private var showRecommendation = false
+    @FocusState private var mileageFocused: Bool
+
+    private let ink = Color(red: 0.06, green: 0.07, blue: 0.08)
+    private let warm = Color(red: 0.91, green: 0.68, blue: 0.32)
+
     var body: some View {
-        List(CaptureRegion.allCases, id: \.self) { region in
-            HStack {
-                Text(region.rawValue)
-                Spacer()
-                Text(model.progress[region].rawValue)
-                    .foregroundStyle(model.progress[region] == .covered ? .green : .orange)
-                    .accessibilityLabel(region.rawValue)
-                    .accessibilityValue(model.progress[region].rawValue)
+        ZStack(alignment: .bottom) {
+            ink.ignoresSafeArea()
+            RadialGradient(colors: [Color(red: 0.16, green: 0.19, blue: 0.23).opacity(0.8), ink], center: .center, startRadius: 40, endRadius: 520)
+                .ignoresSafeArea()
+                .opacity(showSheet ? 0.72 : 0.48)
+            PostScanVehicleHero(progress: model.progress)
+                .ignoresSafeArea()
+                .scaleEffect(showSheet ? 1 : 0.84)
+                .opacity(showSheet ? 1 : 0)
+                .animation(.easeOut(duration: 0.72), value: showSheet)
+            VStack(spacing: 0) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("NEXT MOVE").font(.caption2.weight(.semibold)).tracking(2.2).foregroundStyle(warm)
+                        Text("Your vehicle,\nmade actionable.").font(.system(size: 30, weight: .semibold, design: .rounded)).foregroundStyle(.white)
+                    }
+                    Spacer()
+                    Image(systemName: "sparkles").font(.title3).foregroundStyle(warm)
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 18)
+                .opacity(showSheet ? 1 : 0)
+                .offset(y: showSheet ? 0 : 18)
+                .animation(.easeOut(duration: 0.48).delay(0.16), value: showSheet)
+
+                ScrollView(showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: 18) {
+                        Text("A few details help us shape your next step.")
+                            .font(.subheadline)
+                            .foregroundStyle(.white.opacity(0.68))
+                        PostScanChoiceRow(title: "Ownership", choices: ["Leased", "Financed", "Owned"], selection: $leaseChoice)
+                        PostScanChoiceRow(title: "Annual income", choices: ["Under $50k", "$50–100k", "$100k+"], selection: $incomeChoice)
+                        PostScanChoiceRow(title: "Accident history", choices: ["None", "One", "Multiple"], selection: $accidentChoice)
+                        VStack(alignment: .leading, spacing: 9) {
+                            Text("Current mileage").font(.caption.weight(.semibold)).foregroundStyle(.white.opacity(0.68))
+                            HStack(spacing: 10) {
+                                Image(systemName: "gauge.with.dots.needle.67percent").foregroundStyle(warm)
+                                TextField("e.g. 42,000", text: $mileage)
+#if canImport(UIKit)
+                                    .keyboardType(.numberPad)
+#endif
+                                    .focused($mileageFocused)
+                                    .foregroundStyle(.white)
+                                    .font(.system(size: 17, weight: .medium, design: .rounded))
+                                    .accessibilityLabel("Current mileage")
+                            }
+                            .padding(.horizontal, 14).frame(height: 50)
+                            .background(.white.opacity(0.09), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+                            .overlay(RoundedRectangle(cornerRadius: 15, style: .continuous).stroke(.white.opacity(0.12)))
+                        }
+                        Button {
+                            mileageFocused = false
+                            withAnimation(.easeOut(duration: 0.52)) { showRecommendation = true }
+                        } label: {
+                            HStack {
+                                Text("Generate next step").font(.system(size: 16, weight: .semibold, design: .rounded))
+                                Spacer()
+                                Image(systemName: "arrow.up.right").font(.headline.weight(.semibold))
+                            }
+                            .foregroundStyle(ink)
+                            .padding(.horizontal, 18).frame(height: 54)
+                            .background(warm, in: RoundedRectangle(cornerRadius: 17, style: .continuous))
+                        }
+                        .accessibilityIdentifier("generate-next-step")
+                        .disabled(mileage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        .opacity(mileage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.45 : 1)
+                        if showRecommendation { PostScanRecommendationCard(lease: leaseChoice, mileage: mileage, accent: warm).transition(.move(edge: .bottom).combined(with: .opacity)) }
+                    }
+                    .padding(.horizontal, 24).padding(.top, 20).padding(.bottom, 28)
+                }
+                .frame(maxHeight: 440)
+                .background(.ultraThinMaterial.opacity(0.96), in: UnevenRoundedRectangle(topLeadingRadius: 30, topTrailingRadius: 30))
+                .overlay(alignment: .top) { Capsule().fill(.white.opacity(0.28)).frame(width: 38, height: 4).padding(.top, 9) }
+                .offset(y: showSheet ? 0 : 420)
+                .opacity(showSheet ? 1 : 0)
+                .animation(.easeOut(duration: 0.68).delay(0.28), value: showSheet)
             }
         }
-        .overlay(alignment: .top) { Text("\(model.coveredCount) of 12 covered").font(.headline).padding(.top, 8) }
-        .navigationTitle(title)
+        .preferredColorScheme(.dark)
+#if os(iOS)
+        .toolbar(.hidden, for: .navigationBar)
+        .navigationBarBackButtonHidden()
+#endif
+        .onAppear { withAnimation { showSheet = true } }
     }
 }
 
-private struct ResultsView: View {
-    @ObservedObject var model: CapturePresentationModel
+private struct PostScanVehicleHero: View {
+    let progress: CaptureProgress
+
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                Text("Scan results").font(.title.bold())
-                Text("Coverage: \(model.coveredCount) of 12 regions")
-                Text(model.replayStatus).font(.footnote).foregroundStyle(.secondary)
-                if let error = model.errorMessage {
-                    Text(error).foregroundStyle(.red)
-                    Button("Retry synthetic replay") { model.showReplay() }
-                        .buttonStyle(.borderedProminent)
-                        .accessibilityLabel("Retry synthetic replay")
-                }
-                Text("3D vehicle scan and findings").font(.headline)
-                VehicleCoverageMap(progress: model.progress, findings: model.visionFindings).frame(height: 260)
-                if !model.visionAnalysis.isEmpty { Text(model.visionAnalysis).font(.subheadline) }
-                if !model.visionUnknownRegions.isEmpty {
-                    Text("Unknown / needs another view: \(model.visionUnknownRegions.joined(separator: ", "))").font(.footnote).foregroundStyle(.orange)
-                }
-                ForEach(model.visionRegions) { region in
-                    HStack {
-                        Text(region.id)
-                        Spacer()
-                        Text("\(region.state), \(region.quality)")
+#if canImport(WebKit) && canImport(UIKit)
+        VehicleGLBView(progress: progress, compact: false)
+#else
+        Color.clear
+#endif
+    }
+}
+
+private struct PostScanChoiceRow: View {
+    let title: String
+    let choices: [String]
+    @Binding var selection: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 9) {
+            Text(title).font(.caption.weight(.semibold)).foregroundStyle(.white.opacity(0.68))
+            HStack(spacing: 8) {
+                ForEach(choices, id: \.self) { choice in
+                    Button { withAnimation(.easeInOut(duration: 0.18)) { selection = choice } } label: {
+                        Text(choice).font(.system(size: 13, weight: .semibold, design: .rounded)).lineLimit(1).minimumScaleFactor(0.72)
+                            .foregroundStyle(selection == choice ? Color.black : .white.opacity(0.75))
+                            .frame(maxWidth: .infinity).frame(height: 42)
+                            .background(selection == choice ? Color(red: 0.91, green: 0.68, blue: 0.32) : .white.opacity(0.08), in: RoundedRectangle(cornerRadius: 13, style: .continuous))
                     }
-                    .accessibilityElement(children: .combine)
-                    .accessibilityLabel("\(region.id.replacingOccurrences(of: "-", with: " ").capitalized), \(region.state.replacingOccurrences(of: "_", with: " ")), \(region.quality) quality. \(region.note)")
+                    .accessibilityAddTraits(selection == choice ? .isSelected : [])
                 }
-                if !model.visionFindings.isEmpty {
-                    Text("Evidence-backed findings").font(.headline)
-                    ForEach(Array(model.visionFindings.enumerated()), id: \.element.id) { index, finding in
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("\(index + 1). \(finding.description)").font(.body.bold())
-                            Text("Region: \(finding.region) · confidence \(finding.confidence, specifier: "%.2f")")
-                            Text("Evidence: \(finding.evidence)").font(.footnote).foregroundStyle(.secondary)
-                        }.accessibilityElement(children: .combine)
-                    }
-                }
-                Text(model.findingSummary)
-                if let description = model.findingDescription {
-                    Text(description)
-                    Text(model.findingEvidenceLabel ?? "Demo · synthetic image")
-                        .font(.footnote).foregroundStyle(.secondary)
-                    if let check = model.findingRecommendedCheck {
-                        Text("Recommended check: \(check)")
-                            .font(.subheadline)
-                    }
-                }
-                Text("Recommended next move").font(.headline)
-                if let recommendation = model.recommendation {
-                    Text(recommendation.nextMove).font(.title3.bold())
-                    Text(recommendation.rationale)
-                    Text("Confidence is limited; this is a bounded synthetic scenario.")
-                        .font(.footnote).foregroundStyle(.secondary)
-                    ForEach(recommendation.caveats, id: \.self) { Text("Caveat: \($0)").font(.footnote).foregroundStyle(.secondary) }
-                    Text("Based on: \(recommendation.basedOn.joined(separator: ", "))")
-                        .font(.footnote).foregroundStyle(.secondary)
-                        .accessibilityLabel("Recommendation evidence: \(recommendation.basedOn.joined(separator: ", "))")
-                }
-                Button("Request human review") { model.requestHumanReview() }
-                    .buttonStyle(.borderedProminent)
-                    .accessibilityIdentifier("request-human-review")
-                if let status = model.humanActionStatus {
-                    Text(status)
-                }
-                CoverageList(model: model, title: "Coverage details").frame(minHeight: 420)
-            }.padding()
+            }
         }
-        .accessibilityElement(children: .contain)
+    }
+}
+
+private struct PostScanRecommendationCard: View {
+    let lease: String
+    let mileage: String
+    let accent: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 13) {
+            HStack {
+                Label("NEXT BEST STEP", systemImage: "sparkles")
+                    .font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(accent)
+                Spacer()
+                Text("READY").font(.caption2.weight(.bold)).tracking(1.1).foregroundStyle(.white.opacity(0.5))
+            }
+            Text(lease == "Leased" ? "Start a lease-end review" : "Book a trade-in review")
+                .font(.system(size: 23, weight: .semibold, design: .rounded)).foregroundStyle(.white)
+            Text(lease == "Leased" ? "Your current vehicle and mileage suggest planning early gives you the most flexibility. Compare buyout, renewal, and upgrade paths with a Toyota specialist." : "Your scan is a strong starting point for a value conversation. Bring the vehicle and mileage to a Toyota specialist for a personalized upgrade path.")
+                .font(.subheadline).foregroundStyle(.white.opacity(0.72)).fixedSize(horizontal: false, vertical: true)
+            HStack(spacing: 7) {
+                Image(systemName: "checkmark.circle.fill").foregroundStyle(accent)
+                Text("Based on your \(mileage.isEmpty ? "reported" : mileage) miles and scan")
+                    .font(.caption).foregroundStyle(.white.opacity(0.62))
+            }
+        }
+        .padding(18)
+        .background(Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 21, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 21, style: .continuous).stroke(accent.opacity(0.34)))
     }
 }
