@@ -167,6 +167,8 @@ private final class VehiclePulseOverlay: UIView {
     private let glow = CAGradientLayer()
     private let fillMask = CALayer()
     private let glowMask = CALayer()
+    private let sweepContainer = CALayer()
+    private let sweepMask = CALayer()
     private let sweep = CAGradientLayer()
     private var isAnimating = false
     private let context = CIContext()
@@ -175,13 +177,14 @@ private final class VehiclePulseOverlay: UIView {
         super.init(frame: frame)
         isHidden = true
         isUserInteractionEnabled = false
-        layer.addSublayer(glow); layer.addSublayer(fill); layer.addSublayer(sweep)
+        layer.addSublayer(glow); layer.addSublayer(fill); layer.addSublayer(sweepContainer)
+        sweepContainer.addSublayer(sweep)
         fill.colors = [UIColor.white.withAlphaComponent(0.18).cgColor, UIColor.lightGray.withAlphaComponent(0.04).cgColor, UIColor.white.withAlphaComponent(0.12).cgColor]
         fill.startPoint = CGPoint(x: 0, y: 0); fill.endPoint = CGPoint(x: 1, y: 1); fill.cornerRadius = 18; fill.masksToBounds = true
         glow.colors = [UIColor.white.withAlphaComponent(0.24).cgColor, UIColor.clear.cgColor]
         glow.startPoint = CGPoint(x: 0.5, y: 0); glow.endPoint = CGPoint(x: 0.5, y: 1); glow.opacity = 0.9
         sweep.colors = [UIColor.clear.cgColor, UIColor.white.withAlphaComponent(0.8).cgColor, UIColor.clear.cgColor]
-        sweep.startPoint = CGPoint(x: 0, y: 0.5); sweep.endPoint = CGPoint(x: 1, y: 0.5); sweep.cornerRadius = 4
+        sweep.startPoint = CGPoint(x: 0.5, y: 0); sweep.endPoint = CGPoint(x: 0.5, y: 1); sweep.cornerRadius = 4
     }
 
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
@@ -190,13 +193,19 @@ private final class VehiclePulseOverlay: UIView {
         let image = CIImage(cvPixelBuffer: maskPixelBuffer)
         guard let mask = context.createCGImage(image, from: image.extent), bounds.width > 0, bounds.height > 0 else { hide(); return }
         frame = bounds
-        fillMask.contents = mask; glowMask.contents = mask
+        fillMask.contents = mask; glowMask.contents = mask; sweepMask.contents = mask
         isHidden = false
         setNeedsLayout()
         if !isAnimating { startAnimations() }
     }
 
-    func hide() { isHidden = true; layer.removeAllAnimations(); isAnimating = false }
+    func hide() {
+        isHidden = true
+        layer.removeAllAnimations()
+        sweepContainer.removeAllAnimations()
+        sweep.removeAllAnimations()
+        isAnimating = false
+    }
 
     override func layoutSubviews() {
         super.layoutSubviews()
@@ -204,14 +213,18 @@ private final class VehiclePulseOverlay: UIView {
         fill.mask = fillMask; glow.mask = glowMask
         fillMask.frame = bounds; glowMask.frame = bounds
         fillMask.contentsGravity = .resizeAspectFill; glowMask.contentsGravity = .resizeAspectFill
-        sweep.frame = bounds
+        sweepContainer.frame = bounds
+        sweepContainer.mask = sweepMask
+        sweepMask.frame = bounds
+        sweepMask.contentsGravity = .resizeAspectFill
+        sweep.frame = CGRect(x: 0, y: -bounds.height, width: bounds.width, height: bounds.height * 2)
     }
 
     private func startAnimations() {
         isAnimating = true
         let pulse = CABasicAnimation(keyPath: "opacity"); pulse.fromValue = 0.38; pulse.toValue = 0.95; pulse.duration = 0.72; pulse.autoreverses = true; pulse.repeatCount = .greatestFiniteMagnitude
         glow.add(pulse, forKey: "vehicle-pulse")
-        let scan = CABasicAnimation(keyPath: "position.y"); scan.fromValue = 0; scan.toValue = bounds.height; scan.duration = 1.15; scan.repeatCount = .greatestFiniteMagnitude
+        let scan = CABasicAnimation(keyPath: "position.y"); scan.fromValue = -bounds.height * 0.5; scan.toValue = bounds.height * 1.5; scan.duration = 1.15; scan.repeatCount = .greatestFiniteMagnitude
         sweep.add(scan, forKey: "scan-sweep")
     }
 }
@@ -319,7 +332,11 @@ private struct ARCameraScannerView: UIViewRepresentable {
                     let instance = Self.largestCentralInstance(in: observation)
                     let mask = try observation.generateScaledMaskForImage(forInstances: IndexSet(integer: instance), from: handler)
                     Task { @MainActor [weak self] in
-                        guard let self, self.model?.vehicleMatchStatus == "Vehicle visible", let sceneView = self.sceneView else { return }
+                        guard let self, let sceneView = self.sceneView else { return }
+                        guard self.model?.vehicleMatchStatus == "Vehicle visible" else {
+                            self.pulseOverlay.hide()
+                            return
+                        }
                         self.pulseOverlay.show(maskPixelBuffer: mask, in: sceneView.bounds)
                     }
                 } catch { return }
