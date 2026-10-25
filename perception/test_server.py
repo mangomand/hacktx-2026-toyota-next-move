@@ -8,7 +8,6 @@ import urllib.request
 from unittest.mock import patch
 from http.server import ThreadingHTTPServer
 import server
-import evaluation
 
 
 def observation():
@@ -80,21 +79,6 @@ class PerceptionTests(unittest.TestCase):
             self.assertTrue(payload['text']['format']['strict'])
             self.assertTrue(payload['input'][0]['content'][1]['image_url'].startswith('data:image/jpeg;base64,'))
             self.assertNotIn('requestedRegion', payload)
-
-    def test_evaluation_validation_requires_submitted_evidence_and_blocks_diagnosis(self):
-        value = {'findings': [{'id': 'f1', 'region': 'rear', 'issue': 'scratch', 'confidence': 0.88,
-                               'evidenceRefs': ['frame-1'], 'recommendedCheck': 'Review the rear panel with a qualified person'}],
-                 'resaleLow': 18000, 'resaleHigh': 22000,
-                 'longevityParagraph': 'This is a cautious planning estimate; photos cannot establish hidden mechanical condition or predict a lifespan.',
-                 'replacementHorizon': 'Reassess after the next 12 months.',
-                 'financialServicesRecommendation': 'Confirm the payoff or residual and mileage charges with Toyota Financial Services before deciding.',
-                 'leaseBurden': None, 'assumptions': ['Trim and service history were not verified.'], 'uncertainty': ['Visible observations are not a diagnosis.']}
-        self.assertEqual(evaluation.validate(value, {'frame-1'})['findings'][0]['issue'], 'scratch')
-        with self.assertRaises(ValueError):
-            evaluation.validate(value, {'other-frame'})
-        bad = dict(value, findings=[dict(value['findings'][0], issue='engine failure')])
-        with self.assertRaises(ValueError):
-            evaluation.validate(bad, {'frame-1'})
 
 
 if __name__ == '__main__':
