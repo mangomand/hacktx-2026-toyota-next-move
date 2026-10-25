@@ -1,4 +1,7 @@
 import SwiftUI
+#if canImport(WebKit)
+import WebKit
+#endif
 #if SWIFT_PACKAGE
 import CaptureCore
 #endif
@@ -23,6 +26,7 @@ struct CaptureDemoApp: App {
     }
 }
 
+@MainActor
 struct CaptureChecklistView: View {
     @StateObject private var model = CapturePresentationModel()
 
@@ -404,10 +408,29 @@ private struct LiveCapturePreview: UIViewRepresentable {
 private struct VehicleCoverageMap: View {
     let progress: CaptureProgress
     var findings: [PresentationFinding] = []
-    @State private var rotation: Double = 0
+    @State private var baseRotation: Double = 0
+    @State private var dragRotation: Double = 0
     var body: some View {
 #if canImport(SceneKit) && canImport(UIKit)
-        VStack { SceneKitVehicleView(progress: progress, findings: findings).rotation3DEffect(.degrees(rotation), axis: (x: 0, y: 1, z: 0)); HStack { Button("Rotate view") { rotation = rotation >= 270 ? 0 : rotation + 90 }; Button("Reset view") { rotation = 0 } } }
+        VStack(spacing: 4) {
+            Group {
+#if canImport(WebKit)
+                VehicleGLBView(progress: progress).frame(maxWidth: .infinity)
+#else
+                SceneKitVehicleView(progress: progress, findings: findings)
+#endif
+            }
+                .rotation3DEffect(.degrees(baseRotation + dragRotation), axis: (x: 0, y: 1, z: 0))
+                .simultaneousGesture(DragGesture(minimumDistance: 4)
+                    .onChanged { value in
+                        dragRotation = Double(value.translation.width) * 0.42
+                    }
+                    .onEnded { value in
+                        baseRotation += Double(value.translation.width) * 0.42
+                        dragRotation = 0
+                    })
+            Text("Drag to rotate").font(.caption2).foregroundStyle(.white.opacity(0.62))
+        }
 #else
         GeometryReader { proxy in
             ZStack {
@@ -457,6 +480,32 @@ private struct SceneKitVehicleView: UIViewRepresentable {
     private func aggregate(_ regions: CaptureRegion...) -> CoverageState { regions.contains(where: { progress[$0] == .partial }) ? .partial : (regions.allSatisfy { progress[$0] == .covered } ? .covered : .unseen) }
     private func markerPosition(_ region: CaptureRegion) -> SCNVector3 { switch region { case .frontLeft: return SCNVector3(-1.9, 0.2, 2.8); case .frontRight: return SCNVector3(1.9, 0.2, 2.8); case .rearLeft: return SCNVector3(-1.9, 0.2, -2.8); case .rearRight: return SCNVector3(1.9, 0.2, -2.8); default: return SCNVector3Zero } }
     private func material(_ color: UIColor, state: CoverageState) -> SCNMaterial { let m = SCNMaterial(); m.diffuse.contents = state == .covered ? color : (state == .partial ? UIColor.orange : UIColor(white: 0.38, alpha: 1)); m.lightingModel = .physicallyBased; return m }
+}
+#endif
+
+#if canImport(WebKit) && canImport(UIKit)
+/// Loads the authored Blender GLB through the bundled WebGL material viewer.
+/// This keeps the exact mesh/material reveal authored in Vision assets instead
+/// of substituting the old rounded-box SceneKit placeholder.
+private struct VehicleGLBView: UIViewRepresentable {
+    let progress: CaptureProgress
+
+    func makeUIView(context: Context) -> WKWebView {
+        let view = WKWebView(frame: .zero, configuration: WKWebViewConfiguration())
+        view.isOpaque = false
+        view.backgroundColor = .clear
+        view.scrollView.isScrollEnabled = false
+        if let url = Bundle.main.url(forResource: "index", withExtension: "html", subdirectory: "VehicleViewer") {
+            view.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
+        }
+        return view
+    }
+
+    func updateUIView(_ view: WKWebView, context: Context) {
+        let covered = progress.coverage.values.filter { $0 == .covered }.count
+        let ratio = Double(covered) / Double(max(1, CaptureRegion.allCases.count))
+        view.evaluateJavaScript("window.vehicleStudy && window.vehicleStudy.setProgress(\(ratio));", completionHandler: nil)
+    }
 }
 #endif
 
