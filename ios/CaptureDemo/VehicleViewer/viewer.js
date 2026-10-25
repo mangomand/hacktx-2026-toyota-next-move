@@ -5,16 +5,8 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.75));
-renderer.domElement.style.width='100%';
-renderer.domElement.style.height='100%';
-function viewportSize(){
- const root=document.documentElement;
- const body=document.body;
- return {width:Math.max(1,root.clientWidth||body.clientWidth||innerWidth),height:Math.max(1,root.clientHeight||body.clientHeight||innerHeight)};
-}
-const viewport=viewportSize();
-renderer.setSize(viewport.width,viewport.height,false);
-renderer.setClearColor(0x141517,1);
+renderer.setSize(innerWidth,innerHeight);
+renderer.setClearColor(0x141517,0);
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure=1.1;
 document.body.prepend(renderer.domElement);
@@ -23,7 +15,7 @@ const pmrem=new THREE.PMREMGenerator(renderer);
 const environment=new RoomEnvironment();
 scene.environment=pmrem.fromScene(environment,.04).texture;
 environment.dispose();
-const camera=new THREE.PerspectiveCamera(35,viewport.width/viewport.height,.05,70);
+const camera=new THREE.PerspectiveCamera(35,innerWidth/innerHeight,.05,70);
 const heroCamera=new THREE.Vector3(6,3.05,7);
 camera.position.copy(heroCamera);
 const controls=new OrbitControls(camera,renderer.domElement);
@@ -33,7 +25,7 @@ controls.minDistance=5.7;controls.maxDistance=13;
 controls.minPolarAngle=.50;controls.maxPolarAngle=1.48;
 const uniforms={radius:{value:1.2},beauty:{value:1},inspectionState:{value:0},pigment:{value:new THREE.Color(.018,.075,.34)},amber:{value:new THREE.Color(.72,.38,.08)}};
 const reduced=matchMedia('(prefers-reduced-motion: reduce)');
-let started=null,mode='beauty',model,ready=false,shaderMaterials=0,pendingProgress=null;
+let started=null,mode='beauty',model,ready=false,shaderMaterials=0;
 const state=document.querySelector('#state');
 function setMode(next){
  mode=next;uniforms.beauty.value=next==='beauty'?1:0;uniforms.inspectionState.value=next==='uncertain'?1:(next==='reveal'?2:0);
@@ -42,9 +34,6 @@ function setMode(next){
  if(next==='reveal'){started=performance.now();uniforms.radius.value=reduced.matches?1.2:-.12;state.textContent='Accepted evidence study · only permitted surfaces resolve';}
  else if(next==='uncertain'){started=performance.now();uniforms.radius.value=reduced.matches?1.2:-.12;state.textContent='Partial evidence · amber uncertainty stays visible';}
  else{started=null;state.textContent='Asset beauty view · no inspection assessment';}
-}
-function applyProgress(progress){
- setMode('reveal');started=null;uniforms.radius.value=-.12+1.32*progress;
 }
 document.querySelector('#beauty').onclick=()=>setMode('beauty');
 document.querySelector('#uncertain').onclick=()=>setMode('uncertain');
@@ -82,15 +71,11 @@ try{
   };
   material.customProgramCacheKey=()=> 'nextmove-geodesic-reveal-2';
  });
- document.querySelector('#loading').remove();
- window.vehicleStudy={get ready(){return ready},get materialCount(){return shaderMaterials},get mode(){return mode},setProgress(progress){if(!Number.isFinite(progress)||progress<0||progress>1)throw new Error('Progress must be 0...1');pendingProgress=progress;if(ready)applyProgress(progress);},reset:()=>setMode('beauty')};
- ready=true;
- if(pendingProgress!==null)applyProgress(pendingProgress);
- window.webkit?.messageHandlers?.vehicleStudyReady?.postMessage({ready:true});
+ document.querySelector('#loading').remove();ready=true;
+ window.vehicleStudy={get ready(){return ready},get materialCount(){return shaderMaterials},get mode(){return mode},setProgress(progress){if(!Number.isFinite(progress)||progress<0||progress>1)throw new Error('Progress must be 0...1');setMode('reveal');started=null;uniforms.radius.value=-.12+1.32*progress;},reset:()=>setMode('beauty')};
 }catch(error){document.querySelector('#loading').remove();document.querySelector('#error').textContent=`Vehicle load failed: ${error.message}`;console.error(error);}
-function resize(){const {width,height}=viewportSize();camera.aspect=width/height;camera.updateProjectionMatrix();renderer.setSize(width,height,false);}
+function resize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);}
 addEventListener('resize',resize);
-new ResizeObserver(resize).observe(document.documentElement);
 function draw(now){
  requestAnimationFrame(draw);
  if(started!==null&&!reduced.matches){const t=THREE.MathUtils.clamp((now-started-300)/2200,0,1);const eased=t*t*(3-2*t);uniforms.radius.value=-.12+1.32*eased;if(t===1){started=null;state.textContent=mode==='uncertain'?'Partial evidence remains amber · unresolved surfaces stay neutral':'Accepted surfaces resolved · roof, rear and far side stay neutral';}}
