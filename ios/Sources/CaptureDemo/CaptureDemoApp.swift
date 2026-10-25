@@ -328,7 +328,10 @@ private struct ARCameraScannerView: UIViewRepresentable {
             DispatchQueue.global(qos: .userInitiated).async(execute: DispatchWorkItem {
                 do {
                     try handler.perform([request])
-                    guard let observation = request.results?.first else { return }
+                    guard let observation = request.results?.first else {
+                        Task { @MainActor [weak self] in self?.pulseOverlay.hide() }
+                        return
+                    }
                     let instance = Self.largestCentralInstance(in: observation)
                     let mask = try observation.generateScaledMaskForImage(forInstances: IndexSet(integer: instance), from: handler)
                     Task { @MainActor [weak self] in
@@ -339,7 +342,9 @@ private struct ARCameraScannerView: UIViewRepresentable {
                         }
                         self.pulseOverlay.show(maskPixelBuffer: mask, in: sceneView.bounds)
                     }
-                } catch { return }
+                } catch {
+                    Task { @MainActor [weak self] in self?.pulseOverlay.hide() }
+                }
             })
             #endif
         }
