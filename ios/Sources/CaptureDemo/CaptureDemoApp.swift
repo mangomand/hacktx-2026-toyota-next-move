@@ -8,6 +8,9 @@ import CaptureCore
 #if canImport(SceneKit) && canImport(UIKit)
 import SceneKit
 import UIKit
+#if canImport(CoreImage)
+import CoreImage
+#endif
 #if canImport(Vision)
 import Vision
 #endif
@@ -71,7 +74,7 @@ private struct GuidedCaptureView: View {
             ZStack {
 #if canImport(ARKit) && canImport(UIKit)
                 if model.cameraAvailable && model.arPoseAvailable {
-                    ARCameraScannerView(model: model).ignoresSafeArea()
+                    ARCameraScannerView(model: model, pulseEnabled: model.vehicleMatchStatus == "Vehicle visible" && !model.isPaused).ignoresSafeArea()
                 } else if model.cameraAvailable {
 #if canImport(AVFoundation)
                     LiveCapturePreview(session: model.activeCaptureSession).ignoresSafeArea()
@@ -126,29 +129,138 @@ private struct GuidedCaptureView: View {
 #if canImport(ARKit) && canImport(UIKit)
 private extension Notification.Name { static let resetARCalibration = Notification.Name("resetARCalibration") }
 
+/// Displays the latest vehicle mask while Core Animation keeps the pulse
+/// sweep running on the display refresh cadence. The coordinator coalesces
+/// camera frames so old Vision work never queues behind the live feed.
+private final class VehiclePulseOverlay: UIView {
+    private let fill = CAGradientLayer()
+    private let glow = CAGradientLayer()
+    private let fillMask = CALayer()
+    private let glowMask = CALayer()
+    private let sweepContainer = CALayer()
+    private let sweepMask = CALayer()
+    private let sweep = CAGradientLayer()
+    private var isAnimating = false
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        isHidden = true
+        isUserInteractionEnabled = false
+        layer.addSublayer(glow); layer.addSublayer(fill); layer.addSublayer(sweepContainer)
+        sweepContainer.addSublayer(sweep)
+        fill.colors = [UIColor.white.withAlphaComponent(0.18).cgColor, UIColor.lightGray.withAlphaComponent(0.04).cgColor, UIColor.white.withAlphaComponent(0.12).cgColor]
+        fill.startPoint = CGPoint(x: 0, y: 0); fill.endPoint = CGPoint(x: 1, y: 1); fill.cornerRadius = 18; fill.masksToBounds = true
+        glow.colors = [UIColor.white.withAlphaComponent(0.24).cgColor, UIColor.clear.cgColor]
+        glow.startPoint = CGPoint(x: 0.5, y: 0); glow.endPoint = CGPoint(x: 0.5, y: 1); glow.opacity = 0.9
+        sweep.colors = [UIColor.clear.cgColor, UIColor.white.withAlphaComponent(0.8).cgColor, UIColor.clear.cgColor]
+        sweep.startPoint = CGPoint(x: 0.5, y: 0); sweep.endPoint = CGPoint(x: 0.5, y: 1); sweep.cornerRadius = 4
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    @MainActor
+    func show(mask: CGImage, in bounds: CGRect) {
+        guard bounds.width > 0, bounds.height > 0 else {
+            hide(); return
+        }
+        frame = bounds
+        fillMask.contents = mask; glowMask.contents = mask; sweepMask.contents = mask
+        isHidden = false
+        setNeedsLayout()
+        if !isAnimating { startAnimations() }
+    }
+
+    @MainActor
+    func hide() {
+        isHidden = true
+        layer.removeAllAnimations()
+        sweepContainer.removeAllAnimations()
+        sweep.removeAllAnimations()
+        isAnimating = false
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        fill.frame = bounds; glow.frame = bounds
+        fill.mask = fillMask; glow.mask = glowMask
+        fillMask.frame = bounds; glowMask.frame = bounds
+        fillMask.contentsGravity = .resizeAspectFill; glowMask.contentsGravity = .resizeAspectFill
+        sweepContainer.frame = bounds
+        sweepContainer.mask = sweepMask
+        sweepMask.frame = bounds
+        sweepMask.contentsGravity = .resizeAspectFill
+        sweep.frame = CGRect(x: 0, y: -bounds.height, width: bounds.width, height: bounds.height * 2)
+    }
+
+    private func startAnimations() {
+        isAnimating = true
+        let pulse = CABasicAnimation(keyPath: "opacity"); pulse.fromValue = 0.38; pulse.toValue = 0.95; pulse.duration = 0.72; pulse.autoreverses = true; pulse.repeatCount = .greatestFiniteMagnitude
+        glow.add(pulse, forKey: "vehicle-pulse")
+        let scan = CABasicAnimation(keyPath: "position.y"); scan.fromValue = -bounds.height * 0.5; scan.toValue = bounds.height * 1.5; scan.duration = 1.15; scan.repeatCount = .greatestFiniteMagnitude
+        sweep.add(scan, forKey: "scan-sweep")
+    }
+}
+
 private struct ARCameraScannerView: UIViewRepresentable {
     @ObservedObject var model: CapturePresentationModel
+    let pulseEnabled: Bool
 
     func makeCoordinator() -> Coordinator { Coordinator(model: model) }
 
     func makeUIView(context: Context) -> ARSCNView {
         let view = ARSCNView(); view.scene = SCNScene(); view.automaticallyUpdatesLighting = true; view.backgroundColor = .black; view.debugOptions = []
         context.coordinator.sceneView = view
+        context.coordinator.attachPulseOverlay()
+        context.coordinator.setPulseEnabled(pulseEnabled)
         let config = ARWorldTrackingConfiguration(); view.session.delegate = context.coordinator; view.session.run(config)
         context.coordinator.installResetObserver(configuration: config)
         return view
     }
     func updateUIView(_ view: ARSCNView, context: Context) {
         context.coordinator.sceneView = view
+        context.coordinator.attachPulseOverlay()
+        context.coordinator.setPulseEnabled(pulseEnabled)
     }
     static func dismantleUIView(_ view: ARSCNView, coordinator: Coordinator) { coordinator.teardown() }
 
     final class Coordinator: NSObject, ARSessionDelegate {
         weak var model: CapturePresentationModel?
         weak var sceneView: ARSCNView?
+        private let pulseOverlay = VehiclePulseOverlay()
+        private let maskQueue = DispatchQueue(label: "capture.vehicle-mask", qos: .userInitiated)
+        private let maskStateLock = NSLock()
+        private var latestMaskFrame: CVPixelBuffer?
+        private var maskRequestInFlight = false
+        private var pulseEnabled = false
+        private var maskGeneration = 0
+        private let cameraStateLock = NSLock()
+        private var pendingCameraFrame: (buffer: CVPixelBuffer, timestamp: TimeInterval)?
+        private var cameraDeliveryScheduled = false
         private var resetObserver: NSObjectProtocol?
         private var configuration: ARWorldTrackingConfiguration?
         init(model: CapturePresentationModel) { self.model = model }
+
+        @MainActor
+        func attachPulseOverlay() {
+            guard let sceneView else { return }
+            if pulseOverlay.superview !== sceneView {
+                sceneView.addSubview(pulseOverlay)
+                pulseOverlay.frame = .zero
+            }
+        }
+
+        @MainActor
+        func setPulseEnabled(_ enabled: Bool) {
+            maskStateLock.lock()
+            pulseEnabled = enabled
+            if !enabled {
+                latestMaskFrame = nil
+                maskRequestInFlight = false
+                maskGeneration &+= 1
+            }
+            maskStateLock.unlock()
+            if !enabled { pulseOverlay.hide() }
+        }
 
         func installResetObserver(configuration: ARWorldTrackingConfiguration) {
             self.configuration = configuration
@@ -162,14 +274,30 @@ private struct ARCameraScannerView: UIViewRepresentable {
                 NotificationCenter.default.removeObserver(resetObserver)
                 self.resetObserver = nil
             }
+            maskStateLock.lock()
+            latestMaskFrame = nil
+            pulseEnabled = false
+            maskRequestInFlight = false
+            maskGeneration &+= 1
+            maskStateLock.unlock()
+            cameraStateLock.lock()
+            pendingCameraFrame = nil
+            cameraDeliveryScheduled = false
+            cameraStateLock.unlock()
             sceneView?.session.pause()
+            Task { @MainActor [weak self] in
+                self?.pulseOverlay.hide()
+                self?.pulseOverlay.removeFromSuperview()
+            }
             configuration = nil
             sceneView = nil
         }
 
         func sessionWasInterrupted(_ session: ARSession) {
             Task { @MainActor [weak self] in
-                self?.model?.handleARSessionInterruption()
+                guard let self else { return }
+                self.setPulseEnabled(false)
+                self.model?.handleARSessionInterruption()
             }
         }
 
@@ -177,26 +305,153 @@ private struct ARCameraScannerView: UIViewRepresentable {
             Task { @MainActor [weak self] in
                 guard let self, let configuration = self.configuration else { return }
                 session.run(configuration, options: [.resetTracking, .removeExistingAnchors])
+                self.setPulseEnabled(self.model?.vehicleMatchStatus == "Vehicle visible" && !(self.model?.isPaused ?? false))
                 self.model?.handleARSessionInterruptionEnded()
             }
         }
 
         func session(_ session: ARSession, didFailWithError error: Error) {
             Task { @MainActor [weak self] in
-                self?.model?.handleARSessionFailure()
+                guard let self else { return }
+                self.setPulseEnabled(false)
+                self.model?.handleARSessionFailure()
             }
         }
 
         func session(_ session: ARSession, didUpdate frame: ARFrame) {
             let pixelBuffer = frame.capturedImage
             let timestamp = frame.timestamp
-            Task { @MainActor [weak self] in
-                self?.model?.consumeARFrame(pixelBuffer: pixelBuffer, timestamp: timestamp)
+            enqueueCameraFrame(pixelBuffer, timestamp: timestamp)
+            enqueueMaskFrame(pixelBuffer)
+        }
+
+        /// Keep only the newest camera frame while Vision is working. This
+        /// removes the old 0.2-second gate (a hard 5 Hz ceiling) without
+        /// allowing a backlog of stale segmentation requests.
+        private func enqueueMaskFrame(_ pixelBuffer: CVPixelBuffer) {
+            maskStateLock.lock()
+            latestMaskFrame = pixelBuffer
+            let shouldStart = pulseEnabled && !maskRequestInFlight
+            let generation = maskGeneration
+            if shouldStart {
+                maskRequestInFlight = true
+                latestMaskFrame = nil
+            }
+            maskStateLock.unlock()
+            guard shouldStart else { return }
+            runMaskFrame(pixelBuffer, generation: generation)
+        }
+
+        private func runMaskFrame(_ pixelBuffer: CVPixelBuffer, generation: Int) {
+            maskQueue.async { [weak self] in
+                let mask = Self.renderVehicleMask(in: pixelBuffer)
+                Task { @MainActor [weak self] in
+                    self?.finishMaskFrame(mask, generation: generation)
+                }
             }
         }
 
+        private func takeLatestMaskFrame() -> CVPixelBuffer? {
+            maskStateLock.lock()
+            defer { maskStateLock.unlock() }
+            guard pulseEnabled, let pixelBuffer = latestMaskFrame else {
+                latestMaskFrame = nil
+                maskRequestInFlight = false
+                return nil
+            }
+            latestMaskFrame = nil
+            return pixelBuffer
+        }
 
+        private func enqueueCameraFrame(_ pixelBuffer: CVPixelBuffer, timestamp: TimeInterval) {
+            cameraStateLock.lock()
+            pendingCameraFrame = (pixelBuffer, timestamp)
+            let shouldSchedule = !cameraDeliveryScheduled
+            cameraDeliveryScheduled = true
+            cameraStateLock.unlock()
+            guard shouldSchedule else { return }
+            Task { @MainActor [weak self] in
+                self?.deliverLatestCameraFrame()
+            }
+        }
 
+        @MainActor
+        private func deliverLatestCameraFrame() {
+            cameraStateLock.lock()
+            let frame = pendingCameraFrame
+            pendingCameraFrame = nil
+            cameraDeliveryScheduled = false
+            cameraStateLock.unlock()
+            if let frame { model?.consumeARFrame(pixelBuffer: frame.buffer, timestamp: frame.timestamp) }
+        }
+
+        @MainActor
+        private func finishMaskFrame(_ mask: CGImage?, generation: Int) {
+            maskStateLock.lock()
+            let enabled = pulseEnabled
+            let currentGeneration = maskGeneration
+            maskStateLock.unlock()
+            guard enabled, generation == currentGeneration else { return }
+            guard let sceneView, model?.vehicleMatchStatus == "Vehicle visible", model?.isPaused != true, let mask else {
+                pulseOverlay.hide()
+                maskStateLock.lock()
+                latestMaskFrame = nil
+                maskRequestInFlight = false
+                maskStateLock.unlock()
+                return
+            }
+            pulseOverlay.show(mask: mask, in: sceneView.bounds)
+            if let next = takeLatestMaskFrame() {
+                maskStateLock.lock()
+                let nextGeneration = maskGeneration
+                maskStateLock.unlock()
+                runMaskFrame(next, generation: nextGeneration)
+            }
+        }
+
+        #if canImport(Vision)
+        private static let maskContext = CIContext()
+
+        private static func renderVehicleMask(in pixelBuffer: CVPixelBuffer) -> CGImage? {
+            let request = VNGenerateForegroundInstanceMaskRequest()
+            let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: .right)
+            do {
+                try handler.perform([request])
+                guard let observation = request.results?.first else { return nil }
+                let instance = largestCentralInstance(in: observation)
+                let mask = try observation.generateScaledMaskForImage(forInstances: IndexSet(integer: instance), from: handler)
+                return VehiclePulseMask.image(from: mask, context: maskContext)
+            } catch {
+                return nil
+            }
+        }
+
+        private static func largestCentralInstance(in observation: VNInstanceMaskObservation) -> Int {
+            let mask = observation.instanceMask
+            CVPixelBufferLockBaseAddress(mask, .readOnly)
+            defer { CVPixelBufferUnlockBaseAddress(mask, .readOnly) }
+            guard let base = CVPixelBufferGetBaseAddress(mask)?.assumingMemoryBound(to: UInt8.self) else { return observation.allInstances.first ?? 1 }
+            let width = CVPixelBufferGetWidth(mask); let height = CVPixelBufferGetHeight(mask); let stride = CVPixelBufferGetBytesPerRow(mask)
+            var counts: [Int: Int] = [:]; var sums: [Int: (x: Int, y: Int)] = [:]
+            for y in 0..<height {
+                for x in 0..<width {
+                    let label = Int(base[y * stride + x]); guard label > 0 else { continue }
+                    counts[label, default: 0] += 1; sums[label, default: (0, 0)].x += x; sums[label, default: (0, 0)].y += y
+                }
+            }
+            let centerX = Double(width) / 2; let centerY = Double(height) / 2
+            return counts.max { lhs, rhs in
+                func score(_ item: (key: Int, value: Int)) -> Double {
+                    let centroid = sums[item.key]!; let x = Double(centroid.x) / Double(item.value); let y = Double(centroid.y) / Double(item.value)
+                    let distance = hypot((x - centerX) / centerX, (y - centerY) / centerY)
+                    return Double(item.value) * max(0.2, 1.0 - distance * 0.45)
+                }
+                return score(lhs) < score(rhs)
+            }?.key ?? observation.allInstances.first ?? 1
+        }
+        #else
+        private static func renderVehicleMask(in pixelBuffer: CVPixelBuffer) -> CGImage? { nil }
+        #endif
     }
 }
 #endif

@@ -1,4 +1,8 @@
 import Foundation
+#if canImport(CoreImage) && canImport(CoreVideo)
+import CoreImage
+import CoreVideo
+#endif
 
 /// App-internal model observation, independent of the currently requested view.
 public struct VehicleObservation: Codable, Equatable, Sendable {
@@ -51,3 +55,15 @@ public struct PerceptionRequest: Encodable, Sendable {
     public let imageBase64: String
     public init(frameID: String, jpeg: Data) { self.frameID = frameID; imageBase64 = jpeg.base64EncodedString() }
 }
+
+#if canImport(CoreImage) && canImport(CoreVideo)
+/// Vision returns a one-component grayscale mask with an opaque alpha channel.
+/// CALayer masks use alpha, so make the black background transparent before the
+/// image is composited over the camera feed.
+public enum VehiclePulseMask {
+    public static func image(from pixelBuffer: CVPixelBuffer, context: CIContext) -> CGImage? {
+        let image = CIImage(cvPixelBuffer: pixelBuffer).applyingFilter("CIMaskToAlpha")
+        return context.createCGImage(image, from: image.extent)
+    }
+}
+#endif
