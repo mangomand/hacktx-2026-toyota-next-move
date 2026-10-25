@@ -1,0 +1,44 @@
+name: iOS checks
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  swift:
+    name: Swift tests and build
+    runs-on: macos-15
+    timeout-minutes: 20
+    env:
+      TOOLCHAINS: swift 6.0.3
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Select Swift toolchain
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "6.0"
+
+      - name: Run tests
+        run: swift test --package-path ios
+
+      - name: Run VisionCore tests
+        run: swift test --package-path vision
+
+      - name: Build CaptureDemo
+        run: swift build --package-path ios --product CaptureDemo
+
+      - name: Build iOS simulator app
+        run: >-
+          xcodebuild -project ios/CaptureDemo.xcodeproj
+          -scheme CaptureDemo
+          -destination 'platform=iOS Simulator,name=iPhone 17'
+          -derivedDataPath /tmp/toyota-next-move-derived
+          build
