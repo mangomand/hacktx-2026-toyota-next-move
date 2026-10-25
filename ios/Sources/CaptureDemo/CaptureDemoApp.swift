@@ -488,6 +488,76 @@ private struct SceneKitVehicleView: UIViewRepresentable {
 #endif
 
 #if canImport(WebKit) && canImport(UIKit)
+private final class VehicleViewerSchemeHandler: NSObject, WKURLSchemeHandler {
+    private let rootURL: URL
+
+    init(rootURL: URL) {
+        self.rootURL = rootURL.standardizedFileURL
+    }
+
+    func webView(_ webView: WKWebView, start urlSchemeTask: WKURLSchemeTask) {
+        guard let requestURL = urlSchemeTask.request.url,
+              let fileURL = fileURL(for: requestURL),
+              let data = try? Data(contentsOf: fileURL, options: [.mappedIfSafe]) else {
+            urlSchemeTask.didFailWithError(NSError(domain: NSURLErrorDomain, code: NSURLErrorFileDoesNotExist,
+                userInfo: [NSLocalizedDescriptionKey: "Vehicle viewer resource was not found."]))
+            return
+        }
+
+        let response = URLResponse(url: requestURL, mimeType: Self.mimeType(for: fileURL),
+            expectedContentLength: data.count, textEncodingName: Self.textEncodingName(for: fileURL))
+        urlSchemeTask.didReceive(response)
+        urlSchemeTask.didReceive(data)
+        urlSchemeTask.didFinish()
+    }
+
+    func webView(_ webView: WKWebView, stop urlSchemeTask: WKURLSchemeTask) {}
+
+    private func fileURL(for requestURL: URL) -> URL? {
+        guard requestURL.host == "bundle" else { return nil }
+        let path = requestURL.path.removingPercentEncoding ?? requestURL.path
+        guard path.hasPrefix("/"), !path.contains("\0") else { return nil }
+        let components = path.split(separator: "/", omittingEmptySubsequences: true).map(String.init)
+        guard !components.isEmpty,
+              components.allSatisfy({ $0 != "." && $0 != ".." && !$0.contains("\\") }) else { return nil }
+
+        let candidate = components.reduce(rootURL) { partial, component in
+            partial.appendingPathComponent(component, isDirectory: false)
+        }.standardizedFileURL
+        let rootPath = rootURL.path
+        let isDirectory = (try? candidate.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? true
+        guard candidate.path == rootPath || candidate.path.hasPrefix(rootPath + "/"),
+              FileManager.default.fileExists(atPath: candidate.path),
+              !isDirectory else { return nil }
+        return candidate
+    }
+
+    private static func mimeType(for url: URL) -> String {
+        switch url.pathExtension.lowercased() {
+        case "html": return "text/html"
+        case "js", "mjs": return "text/javascript"
+        case "css": return "text/css"
+        case "json": return "application/json"
+        case "glb": return "model/gltf-binary"
+        case "png": return "image/png"
+        case "jpg", "jpeg": return "image/jpeg"
+        case "webp": return "image/webp"
+        case "svg": return "image/svg+xml"
+        case "woff": return "font/woff"
+        case "woff2": return "font/woff2"
+        case "ttf": return "font/ttf"
+        default: return "application/octet-stream"
+        }
+    }
+
+    private static func textEncodingName(for url: URL) -> String? {
+        switch url.pathExtension.lowercased() {
+        case "html", "js", "mjs", "css", "json", "svg": return "utf-8"
+        default: return nil
+        }
+    }
+}
+
 /// Loads the authored Blender GLB through the bundled WebGL material viewer.
 /// This keeps the exact mesh/material reveal authored in Vision assets instead
 /// of substituting the old rounded-box SceneKit placeholder.
@@ -497,6 +567,10 @@ private struct VehicleGLBView: UIViewRepresentable {
 
     func makeUIView(context: Context) -> WKWebView {
         let configuration = WKWebViewConfiguration()
+        guard let indexURL = Bundle.main.url(forResource: "index", withExtension: "html", subdirectory: "VehicleViewer") else {
+            return WKWebView(frame: .zero, configuration: configuration)
+        }
+        configuration.setURLSchemeHandler(VehicleViewerSchemeHandler(rootURL: indexURL.deletingLastPathComponent()), forURLScheme: "toyota-viewer")
         if compact {
             let script = WKUserScript(source: "const s=document.createElement('style');s.textContent='header,.controls,#state,footer,#anchor,#loading,#error{display:none!important}';document.documentElement.appendChild(s);", injectionTime: .atDocumentEnd, forMainFrameOnly: true)
             configuration.userContentController.addUserScript(script)
@@ -505,9 +579,7 @@ private struct VehicleGLBView: UIViewRepresentable {
         view.isOpaque = false
         view.backgroundColor = .clear
         view.scrollView.isScrollEnabled = false
-        if let url = Bundle.main.url(forResource: "index", withExtension: "html", subdirectory: "VehicleViewer") {
-            view.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
-        }
+        view.load(URLRequest(url: URL(string: "toyota-viewer://bundle/index.html")!))
         return view
     }
 
