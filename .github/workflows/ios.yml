@@ -1,0 +1,31 @@
+name: iOS checks
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - feat/ar-scan-pulse
+
+jobs:
+  swift:
+    name: Swift tests and build
+    runs-on: macos-14
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Select Swift toolchain
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: '6.0'
+      - name: Run tests
+        run: swift test --package-path ios
+      - name: Run VisionCore tests
+        run: swift test --package-path vision
+      - name: Build CaptureDemo
+        run: swift build --package-path ios --product CaptureDemo
+      - name: Build iOS simulator app
+        run: >-
+          xcodebuild -project ios/CaptureDemo.xcodeproj -scheme CaptureDemo
+          -sdk iphonesimulator -destination 'generic/platform=iOS Simulator'
+          CODE_SIGNING_ALLOWED=NO build
