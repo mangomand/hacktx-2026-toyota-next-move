@@ -27,13 +27,15 @@ jobs:
           swift-version: "6.0"
 
       - name: Run tests
-        run: swift test --package-path ios
+        # Swift 6.0.3 aborts while reconstructing SwiftUI StateObject debug
+        # types; this frontend flag disables only that compiler assertion.
+        run: swift test --package-path ios -Xswiftc -Xfrontend -Xswiftc -disable-round-trip-debug-types
 
       - name: Run VisionCore tests
-        run: swift test --package-path vision
+        run: swift test --package-path vision -Xswiftc -Xfrontend -Xswiftc -disable-round-trip-debug-types
 
       - name: Build CaptureDemo
-        run: swift build --package-path ios --product CaptureDemo
+        run: swift build --package-path ios --product CaptureDemo -Xswiftc -Xfrontend -Xswiftc -disable-round-trip-debug-types
 
       - name: Build iOS simulator app
         run: >-
