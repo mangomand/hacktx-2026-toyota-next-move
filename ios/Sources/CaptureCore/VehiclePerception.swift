@@ -51,3 +51,33 @@ public struct PerceptionRequest: Encodable, Sendable {
     public let imageBase64: String
     public init(frameID: String, jpeg: Data) { self.frameID = frameID; imageBase64 = jpeg.base64EncodedString() }
 }
+
+public enum VehicleGuidance {
+    /// Returns model guidance suitable for the live callout.
+    /// App-owned prompts remain responsible for no-vehicle and unusable states.
+    public static func actionable(from observation: VehicleObservation) -> String? {
+        guard observation.isValid,
+              observation.vehiclePresent,
+              observation.usability != .unusable else { return nil }
+        let message = observation.guidance
+            .split(whereSeparator: { $0.isNewline })
+            .joined(separator: " ")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return message.isEmpty ? nil : message
+    }
+}
+
+#if canImport(CoreImage) && canImport(CoreVideo)
+import CoreImage
+import CoreVideo
+
+/// Converts Vision's foreground mask into an image for the vehicle pulse layers.
+public enum VehiclePulseMask {
+    public static func image(from pixelBuffer: CVPixelBuffer, context: CIContext) -> CGImage? {
+        // CALayer.mask clips by alpha, but Vision returns an opaque grayscale
+        // image. Turn black background pixels transparent before compositing.
+        let image = CIImage(cvPixelBuffer: pixelBuffer).applyingFilter("CIMaskToAlpha")
+        return context.createCGImage(image, from: image.extent)
+    }
+}
+#endif
