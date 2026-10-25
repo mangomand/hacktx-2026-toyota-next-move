@@ -3,6 +3,21 @@ import XCTest
 import VisionCore
 
 final class CaptureCoreTests: XCTestCase {
+    func testBundledVideoIsAddressableOrUnsupportedExplicitly() {
+        #if canImport(AVFoundation)
+        XCTAssertNotNil(ToyotaVideoCapture.bundledURL())
+        #else
+        XCTAssertThrowsError(try ToyotaVideoCapture.sample(configuration: .init(intervalSeconds: 1))) { error in
+            XCTAssertEqual(error as? MediaCaptureError, .unsupportedPlatform)
+        }
+        #endif
+    }
+
+    func testSamplingRejectsNonPositiveOrNonFiniteInterval() {
+        XCTAssertThrowsError(try ToyotaVideoCapture.sample(configuration: .init(intervalSeconds: 0))) { XCTAssertEqual($0 as? MediaCaptureError, .invalidSamplingInterval) }
+        XCTAssertThrowsError(try ToyotaVideoCapture.sample(configuration: .init(intervalSeconds: .nan))) { XCTAssertEqual($0 as? MediaCaptureError, .invalidSamplingInterval) }
+    }
+
     func testCanonicalRegionsAndInitialUnseen() {
         XCTAssertEqual(CaptureRegion.allCases.map(\.rawValue), ["front", "front-left", "left", "rear-left", "rear", "rear-right", "right", "front-right", "roof", "interior-front", "interior-rear", "trunk"])
         let state = CaptureProgress(); XCTAssertTrue(CaptureRegion.allCases.allSatisfy { state[$0] == .unseen })
@@ -76,10 +91,85 @@ extension CaptureCoreTests {
         var progress = CaptureProgress(); progress.markBlocked(.frontLeft)
         XCTAssertEqual(CaptureGuide.nextUncovered(in: progress)?.region, .front)
     }
+    func testSensingModeUsesCameraBaselineOrReplay() {
+        XCTAssertEqual(CaptureSensingMode.cameraGuided.rawValue, "camera_guided")
+        XCTAssertEqual(CaptureSensingMode.replay.rawValue, "replay")
+    }
+
+    func testDynamicGuidancePrioritizesUnseenRegionsAfterAQualityLimitedAttempt() {
+        var progress = CaptureProgress()
+        _ = progress.ingest(.init(frameID: "partial", timestampSeconds: 0, region: .frontLeft, quality: .init(blur: 0.1, lighting: 1, motion: 1)))
+        XCTAssertEqual(CaptureGuide.nextDynamic(in: progress, attempts: [.frontLeft: 1])?.region, .front)
+    }
+
+    func testPixelAnalyzerFlagsFlatOrDarkPixelsAndAcceptsDetailedPixels() {
+        let flat = Array(repeating: UInt8(8), count: 4 * 4 * 4)
+        let flatQuality = CapturePixelQualityAnalyzer().analyze(width: 4, height: 4, rgba: flat)
+        XCTAssertLessThan(flatQuality.blur, CaptureQuality.acceptanceThreshold)
+        XCTAssertLessThan(flatQuality.lighting, CaptureQuality.acceptanceThreshold)
+
+        var detailed = [UInt8](repeating: 0, count: 4 * 4 * 4)
+        for i in stride(from: 0, to: detailed.count, by: 4) { let bright = (i / 4).isMultiple(of: 2) ? UInt8(240) : UInt8(20); detailed[i] = bright; detailed[i + 1] = bright; detailed[i + 2] = bright; detailed[i + 3] = 255 }
+        let detailedQuality = CapturePixelQualityAnalyzer().analyze(width: 4, height: 4, rgba: detailed)
+        XCTAssertGreaterThan(detailedQuality.blur, flatQuality.blur)
+    }
+
+    func testPixelAnalyzerUsesPreviousFrameForMotionQuality() {
+        let analyzer = CapturePixelQualityAnalyzer()
+        let first = Array(repeating: UInt8(32), count: 4 * 4 * 4)
+        var changed = first
+        for i in stride(from: 0, to: changed.count, by: 4) { changed[i] = 240 }
+        let quality = analyzer.analyze(width: 4, height: 4, rgba: changed, previousRGBA: first)
+        XCTAssertLessThan(quality.motion, 1)
+    }
 
     func testReplayIncludesPartialQualityAndUnknownRegions() throws {
         let output = try CaptureReplay.visionHandoff()
         XCTAssertTrue(output.qualityLimitedRegions.contains("rear-left"))
         XCTAssertTrue(output.unknownRegions.contains("trunk"))
+    }
+}
+
+extension CaptureCoreTests {
+    func testModelObservationsConfirmActualRegionNotPromptedRegion() {
+        var accumulator = VehicleObservationAccumulator()
+        var progress = CaptureProgress()
+        func observation(_ id: String) -> VehicleObservation {
+            .init(frameID: id, vehiclePresent: true, usability: .limited,
+                  regions: [.init(id: .rear, confidence: 0.85)], guidance: "Rear bumper visible in dim light.")
+        }
+        XCTAssertTrue(accumulator.ingest(observation("night-1")).isEmpty)
+        let accepted = accumulator.ingest(observation("night-2"))
+        accepted.forEach { progress.recordModelObserved($0) }
+        XCTAssertEqual(accepted, [.rear])
+        XCTAssertEqual(progress[.rear], .covered)
+        XCTAssertEqual(progress[.front], .unseen)
+        XCTAssertNil(progress.latestQuality[.rear], "Model coverage must not invent pixel-quality measurements")
+    }
+
+    func testObservationDuplicatesAmbiguityAndPauseDoNotAdvance() {
+        var accumulator = VehicleObservationAccumulator()
+        let region = VehicleObservation.Region(id: .front, confidence: 0.9)
+        let first = VehicleObservation(frameID: "1", vehiclePresent: true, usability: .usable, regions: [region], guidance: "Front visible")
+        XCTAssertTrue(accumulator.ingest(first).isEmpty)
+        XCTAssertTrue(accumulator.ingest(first).isEmpty)
+        accumulator.breakContinuity()
+        XCTAssertTrue(accumulator.ingest(.init(frameID: "2", vehiclePresent: true, usability: .usable, regions: [region], guidance: "Front visible")).isEmpty)
+        XCTAssertTrue(accumulator.ingest(.init(frameID: "3", vehiclePresent: false, usability: .unusable, regions: [], guidance: "Point toward the car")).isEmpty)
+        XCTAssertTrue(accumulator.ingest(.init(frameID: "4", vehiclePresent: true, usability: .usable, regions: [region], guidance: "Front visible")).isEmpty)
+    }
+
+    func testMalformedAndLowConfidenceModelOutputCannotConfirmCoverage() throws {
+        var accumulator = VehicleObservationAccumulator()
+        for id in ["1", "2"] {
+            XCTAssertTrue(accumulator.ingest(.init(frameID: id, vehiclePresent: true, usability: .limited,
+                regions: [.init(id: .front, confidence: 0.4)], guidance: "Uncertain view")).isEmpty)
+        }
+        let invalid = VehicleObservation(frameID: "3", vehiclePresent: true, usability: .usable,
+            regions: [.init(id: .front, confidence: .nan)], guidance: "Bad confidence")
+        XCTAssertFalse(invalid.isValid)
+        XCTAssertTrue(accumulator.ingest(invalid).isEmpty)
+        let unknown = Data(#"{"frameID":"4","vehiclePresent":true,"usability":"usable","regions":[{"id":"imaginary-panel","confidence":0.9}],"guidance":"x"}"#.utf8)
+        XCTAssertThrowsError(try JSONDecoder().decode(VehicleObservation.self, from: unknown))
     }
 }

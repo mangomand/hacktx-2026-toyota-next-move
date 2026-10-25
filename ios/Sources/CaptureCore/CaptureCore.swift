@@ -9,6 +9,7 @@ public enum CaptureRegion: String, CaseIterable, Codable, Sendable {
 
 public enum CoverageState: String, Codable, Sendable { case unseen, partial, covered, blocked }
 public enum CapturePrompt: String, CaseIterable, Codable, Sendable { case blur, lighting, motion }
+public enum CaptureSensingMode: String, Codable, Sendable { case cameraGuided = "camera_guided", replay = "replay" }
 
 /// Ordered, human-readable guidance for a synthetic or live capture session.
 /// Interior and trunk steps are intentionally named so the operator cannot mistake
@@ -42,6 +43,20 @@ public enum CaptureGuide {
     ]
     public static func step(for region: CaptureRegion) -> CaptureGuideStep { steps.first { $0.region == region }! }
     public static func nextUncovered(in progress: CaptureProgress) -> CaptureGuideStep? { steps.first { progress[$0.region] != .covered && progress[$0.region] != .blocked } }
+    /// Chooses the next prompt from live state rather than following a fixed route.
+    /// Attempts are used to prevent repeatedly prompting a partial region when another
+    /// region has not been seen; ties retain canonical region order for determinism.
+    public static func nextDynamic(in progress: CaptureProgress, attempts: [CaptureRegion: Int]) -> CaptureGuideStep? {
+        CaptureRegion.allCases
+            .filter { progress[$0] != .covered && progress[$0] != .blocked }
+            .sorted { lhs, rhs in
+                let leftAttempts = attempts[lhs, default: 0], rightAttempts = attempts[rhs, default: 0]
+                if leftAttempts != rightAttempts { return leftAttempts < rightAttempts }
+                if progress[lhs] != progress[rhs] { return progress[lhs] == .unseen }
+                return CaptureRegion.allCases.firstIndex(of: lhs)! < CaptureRegion.allCases.firstIndex(of: rhs)!
+            }
+            .first.map(step)
+    }
 }
 
 public struct CaptureQuality: Equatable, Sendable {
@@ -91,6 +106,8 @@ public struct CaptureProgress: Equatable, Sendable {
         if sample.quality.isAcceptable { coverage[sample.region] = .covered; return .observed(sample.region) }
         coverage[sample.region] = .partial; return .needsRetake(sample.region, prompts: sample.quality.prompts)
     }
+    /// Coverage from repeated semantic observations, not fabricated pixel scores.
+    public mutating func recordModelObserved(_ region: CaptureRegion) { coverage[region] = .covered }
     public mutating func markBlocked(_ region: CaptureRegion) { coverage[region] = .blocked }
     public mutating func reset() { self = Self() }
 }

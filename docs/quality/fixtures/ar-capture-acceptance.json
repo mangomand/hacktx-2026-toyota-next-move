@@ -1,0 +1,51 @@
+{
+  "format": "qa-ar-capture-acceptance-v2",
+  "primarySurface": "live_camera_full_screen",
+  "controls": [
+    "cancel",
+    "finish",
+    "scan_settings",
+    "progress"
+  ],
+  "contour": {
+    "color": "white",
+    "cameraAligned": true,
+    "evidenceOnly": true,
+    "detachedMapAccepted": false
+  },
+  "coveragePrompt": {
+    "dynamic": true,
+    "missingRegion": "rear-left",
+    "text": "Move closer for a clearer rear-left view."
+  },
+  "finish": {
+    "coveredRequired": true,
+    "blockedExplained": true,
+    "missingRegions": [
+      "rear-left",
+      "trunk"
+    ]
+  },
+  "replayFallback": {
+    "cameraAvailable": false,
+    "label": "Replay",
+    "liveClaim": false
+  },
+  "postScan": {
+    "surface": "rotatable_vehicle",
+    "transition": "camera_to_vehicle",
+    "findingTapThrough": true,
+    "anchoredToSurface": true,
+    "evidenceAndUncertainty": true,
+    "primitiveGeometry": false
+  },
+  "cameraBaseline": {
+    "device": "iPhone 15 Plus",
+    "tracking": "camera_imu_world_tracking",
+    "rgbFrames": true,
+    "pixelAnalysis": true,
+    "qualityGating": true,
+    "dynamicPrompts": true,
+    "vehicleAssetUpdates": true
+  }
+}

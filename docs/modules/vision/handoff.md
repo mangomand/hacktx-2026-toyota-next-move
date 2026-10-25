@@ -1,53 +1,57 @@
-# Vision lead handoff
+# Vision / 3D handoff
 
-Date: 2026-10-24
-Contract baseline: canonical contracts v0.1.0
-Status: Wave 2 MVP implemented; replay-to-map, deterministic map presentation, and visible finding output are ready for coordinator integration review.
+Updated: 2026-10-25. Canonical contracts: v0.1.0. Current slice: detailed vehicle asset and observation-driven material-reveal prototype. Files edited only under `vision/` and `docs/modules/vision/`; no iOS, QA, canonical schema, customer media, staging or commits.
 
-## Visual quality bar
+## Current outcome
 
-The existing flat top-down labeled outline is debug-only coverage data, not the judge-facing vehicle experience. Wave 2 integration should prioritize one polished hero scenario using a perspective/isometric Toyota-like asset (USDZ/glTF/RealityKit when available, otherwise a polished stylized or turntable fallback). Findings need surface-anchored pins/highlights/callouts on panels, tires, windshields, or lights; observed areas resolve, unseen areas stay grey/neutral, and low-confidence areas stay amber. Canonical 12-region IDs remain metadata behind the model.
+The actual model is `vision/assets/nextmove-crown.glb`, with editable `nextmove-crown.blend`. It uses detailed **Toyota Crown athlete s210 geometry by Black Snow, CC BY 4.0**. Original geometry is attributed; this project authors its materials, geodesic fields, anchors, studio lighting and reveal/orbit study. The rejected toy-like procedural model is discarded. The older pre-existing primitive GLTF is historical importer coverage and is not loaded by the new viewer.
 
-## MVP priority
+The GLB has vehicle meshes/materials/UVs and eight authored anchors, with no floor, background, lights or camera. `review/vehicle-beauty.png` shows the authored material without an inspection assessment. Neutral, intermediate and observed-state renders plus `review/material-reveal.mp4` demonstrate actual Blender material emergence. `vision/preview/` is a working interactive GLB/shader viewer with orbit, reset and reduced-motion behavior.
 
-Prioritize replay-to-map and visible finding output: deterministic synthetic frames, progressive 2.5D reconstruction, evidence references, confidence, and explicit unknown/unseen states. Defer advanced model/security work. Vision resolves the two prior seams: it owns factual `recommendedCheck` text, and derives `unknownRegions` from every non-covered region. UX owns presentation/recommendation copy. Never infer hidden mechanical diagnosis from exterior imagery.
+The blue rectangle visible in the user's app screenshot is hard-coded in the iOS SceneKit background. It is not baked into the vehicle asset. That peer-owned UI was inspected read-only and left unchanged, as was the debug notification panel.
 
-## Files
+## Files in this slice
 
-- `docs/modules/vision/design.md` — bounded design and contract alignment.
-- `IMG_1404.mov` — external quality/coverage fixture only; not added or modified in this repository.
-- `vision/Package.swift` — standalone VisionCore package.
-- `vision/Sources/VisionCore/VisionCore.swift` — replay, progressive map, quality gating, deterministic map presentation, bounded analysis, and visible finding output.
-- `vision/Tests/VisionCoreTests/VisionCoreTests.swift` — MVP behavior plus map color/state, finding attachment, and analysis-bound tests.
-- No canonical contract files, coordinator files, iOS files, or QA files were modified.
+- `vision/tools/build_vehicle.py` — offline Blender authoring, render and GLB export.
+- `vision/tools/surface_field.py` — bounded permitted-surface mesh-edge shortest paths.
+- `vision/tools/start_blender_bridge.py`, `blender-mcp.json` — isolated localhost bridge startup and pinned client configuration fragment.
+- `vision/Tests/test_surface_field.py` — curved-surface distance, unseen/disconnected behavior, UV-seam welding and invalid geometry checks.
+- `vision/assets/source/crown-ccby.glb`, `source/provenance.json`, `CREDITS.md` — attributed source, pinned distributor revision/hash and modifications.
+- `vision/assets/nextmove-crown.blend`, `nextmove-crown.glb`, `reveal-surfaces.json` — source, runtime import candidate and presentation-only field/anchor metadata.
+- `vision/assets/review/` — actual model renders and animated reveal/orbit study.
+- `vision/assets/README.md`, `.gitignore` — build, shader and attribution handoff; generated Blender backups excluded.
+- `vision/preview/` — pinned Three.js dependency, viewer and actual geometry-aware shader.
+- `docs/modules/vision/design.md`, `asset-strategy.md`, `research-vehicle-workflows.md`, `handoff.md` — design, primary-source research and acceptance limits.
 
-## Checks
+## Evidence and contract seams
 
-- Read `docs/contracts/README.md`, `docs/contracts/CONVENTIONS.md`, `docs/contracts/registry.json`, all seven `docs/contracts/*.schema.json` files, and `docs/coordination.md`.
-- Confirmed all twelve canonical region IDs are represented in the vision design.
-- Confirmed working tree contains peer-owned untracked `ios/` and `docs/quality/` content; it was preserved and not staged.
-- Ran `swift test` in `vision/`; 8 tests passed, including invariant-preserving decoding, duplicate-ID rejection, quality gating, synthetic visible findings, map state/color semantics, region-attached findings, deterministic bounded analysis, and expanded diagnostic-claim sanitization.
-- Updated visual-quality guidance only; no 3D/media asset was added. The flat map remains debug-only by explicit handoff policy.
-- Ran `python3 docs/contracts/validate_contracts.py`; registry and schema checks passed after the presentation-only addition.
+Canonical schema refs, artifact/evidence joins and unseen timestamps are resolved by `docs/contracts/CONVENTIONS.md` and `registry.json`. No schema change is needed by this slice. `unknownRegions` remains every unseen/partial/blocked region. Unseen `observedAt` uses session start by canonical convention, not a claim of observation.
 
-## Assumptions
+Vision owns factual visible-follow-up text in `recommendedCheck`; presentation/financial recommendations stay outside this module. Findings require evidence and matching region/anchor joins. No geometry, pose, frame existence or animation may create a finding, coverage or mechanical/safety diagnosis. `IMG_1404.mov` remains external side/rear partial/glare/motion quality metadata only, with no finding and no copied media.
 
-- `artifactRefs`, finding `evidenceRefs`, and scenario-level `fixtureRefs` use opaque repo-relative POSIX paths per `CONVENTIONS.md`; missing references remain unavailable artifacts, never false findings.
-- Vision may use private internal types after authorization, but adapters must emit only canonical v0.1.0 fields.
-- For `state: unseen`, `observedAt` equals the containing session `startedAt` and `artifactRefs` is omitted; this records evaluation time, not observation. The 12-region denominator and `partial`/`covered` quality-gate semantics follow `CONVENTIONS.md`.
-- `MapPresentation` is an internal presentation model: its state-shaped color token, `isUnknown`, accessibility text, region-attached findings, and bounded `analysis` are derived from canonical map/findings values and are not wire-contract fields. Analysis is capped at 240 characters and contains no safety or mechanical conclusion.
-- `IMG_1404.mov` is a side/rear quality fixture (~30s, 1920x1080) with strong blue lighting and motion blur. It may support partial/glare-limited coverage only; it must not generate a finding. Interior, front, roof, and trunk remain unseen.
+The reveal field stores `(mesh-edge distance / 2.8 metres, permission)` in an extra UV channel identified by node extras. The soft growth front blends deep-blue paint, roughness and metallic response within the mesh material. Forbidden/disconnected vertices stay graphite-neutral. The prototype permission mask is an explicitly authored front/left demonstration, not live evidence. Partial/uncertain observations remain graphite-neutral with an amber treatment; the browser study has a separate uncertain mode that never uses accepted blue. `MaterialReveal.swift` retains the canonical state policy and separate finding accent.
 
-## Remaining risks / coordinator review
+Anchor coordinates are specific to `crown-reveal-2.0`; do not reuse the old normalized `heroDefaults()`. `reveal-surfaces.json` now records mesh ID, primitive/triangle indices, triangle vertices, barycentric weights and surface normal for each anchor. `VehicleSurfaceAnchor.SurfaceAttachment` validates the same bounded data plus its asset revision, and `FindingCallout` requires the caller's expected revision to match before presentation. The native client must reproject and occlusion-test the triangle against the matching asset revision before showing a callout. Exact Blender/glTF axes are documented in `reveal-surfaces.json`. The model has no diagnosis or finding baked into it.
 
-- The Swift package emits canonical-shaped values but does not yet serialize a full `ScanSession` envelope; coordinator integration should own that adapter.
-- No production 3D asset is included in this Vision slice. The current flat coverage map must not be shipped as the judge-facing 2.5D experience; asset selection/RealityKit or glTF wiring remains an integration dependency.
-- The hero scenario should be completed and visually reviewed before expanding to all region permutations.
-- Pass/fail/unsure rule details remain module-private and must not become additional wire fields.
-- `IMG_1404.mov` remains external fixture metadata only; no media is stored in the repository.
-- Coverage quality is deliberately conservative: low/glare-limited or motion-blurred evidence is partial and never a finding.
-- Presentation clients must map `MapRegionColor` tokens to an accessible palette and retain the linear region text; the model intentionally does not prescribe visual RGB values or a measured 3D geometry.
+## Executed checks
 
-## Replay merge semantics
+- Blender 4.5.3 via MCP 2.2.4: actual authoring, export, four populated PNG renders and four-second MP4 animation completed. The authoring camera now commits its depsgraph rotation before parenting, preventing blank review renders.
+- Browser prototype loaded the GLB and initialized 16 body-surface reveal materials; direct page evaluation reported ready with no load error. Browser screenshot capture timed out; Blender renders were visually inspected directly.
+- Python surface-field tests: 5 passed.
+- `node --check vision/preview/viewer.js`: passed; pinned dependency installation reported zero vulnerabilities.
+- Browser shader state has separate beauty, partial/uncertain amber, and accepted reveal modes; partial mode never blends to accepted blue.
+- `swift test` in `vision/`: 25 passed, preserving quality gates, uncertainty, evidence joins, sanitization, material states and revisioned anchor validation (including stale-revision rejection).
+- `python3 -m unittest discover -s vision/Tests -p 'test_*.py'`: 7 passed, including bounded reveal-anchor and GLB metadata checks. The build's closest-point routine now emits exported-glTF triangle/barycentric attachments in the triangle domain.
+- Asset structural check: GLB header/chunks valid; eight anchor nodes carry `crown-reveal-2.0`; no review-only floor/camera/light nodes are exported.
+- Fresh independent verification after glTF remap: no actionable findings; all eight triangle/barycentric anchors reproject within approximately 1e-6 m, and viewer beauty/uncertain/accepted semantics were checked.
+- `python3 docs/contracts/validate_contracts.py`: all 7 schemas passed.
+- `git diff --check`: passed.
+- Structural GLB and source round-trip validation plus independent review are recorded in the external task report; completion is not implied by this historical check list.
 
-Synthetic replay reduces frames in sorted frame-ID order. For each region it retains the highest observed quality and all artifact references. A later clear `acceptable`/`high` frame upgrades an earlier unflagged `low`/`unknown` partial observation to `covered`. Any glare-limited or motion-blurred frame sets a sticky limitation for that region, so the merged result remains `partial` (with the quality-limited note) even when a later clear frame is present. This makes low-to-high recovery useful while ensuring flagged evidence cannot be silently cleared by ordering.
+## Assumptions and remaining limits
+
+The detailed Crown is a presentation template, not the exact vehicle in the user's camera and not a measured reconstruction. A beauty render exposes original paint only to inspect the asset; it must never be interpreted as observed coverage. Visible attribution must accompany public model use.
+
+Custom Blender material graphs do not travel as glTF animation. The GLB exports neutral PBR body materials and reveal fields; `preview/viewer.js` demonstrates the runtime shader. Native conversion/import, live evidence permissions, amber uncertainty response, surface-normal/barycentric finding attachment and occlusion, camera alignment and iPhone 15 Plus performance remain unverified. This slice does not replace the model/background inside peer-owned iOS files. No cloud rendering or external generation service is required.
+
+Blender MCP is active only in the isolated authoring session, bound to localhost with telemetry disabled. The checked-in JSON is a configuration fragment, not a claim that T3's global tool catalog was modified. Hardware baseline remains ordinary RGB frames and camera/motion/world pose. No unsupported hidden condition is inferred.

@@ -5,7 +5,18 @@
 <key>CFBundleIdentifier</key><string>com.toyota.nextmove.capture-demo</string>
 <key>CFBundleName</key><string>Toyota Capture Demo</string>
 <key>CFBundleShortVersionString</key><string>0.1</string>
-<key>CFBundleVersion</key><string>1</string>
+<key>CFBundleVersion</key><string>6</string>
+<key>PERCEPTION_ENDPOINT</key><string>$(PERCEPTION_ENDPOINT)</string>
+<key>PERCEPTION_ACCESS_TOKEN</key><string>$(PERCEPTION_ACCESS_TOKEN)</string>
+<key>NSCameraUsageDescription</key><string>Toyota Next Move uses the camera to guide a vehicle capture and check frame quality.</string>
 <key>CFBundlePackageType</key><string>APPL</string>
+<key>CFBundleIconName</key><string>AppIcon</string>
+<key>UISupportedInterfaceOrientations</key>
+<array>
+<string>UIInterfaceOrientationPortrait</string>
+<string>UIInterfaceOrientationPortraitUpsideDown</string>
+<string>UIInterfaceOrientationLandscapeLeft</string>
+<string>UIInterfaceOrientationLandscapeRight</string>
+</array>
 <key>UILaunchScreen</key><dict/>
 </dict></plist>

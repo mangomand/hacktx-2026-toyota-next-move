@@ -15,7 +15,7 @@ let package = Package(
         .package(path: "../vision")
     ],
     targets: [
-        .target(name: "CaptureCore"),
+        .target(name: "CaptureCore", resources: [.process("Resources")]),
         .executableTarget(name: "CaptureDemo", dependencies: ["CaptureCore", .product(name: "VisionCore", package: "vision")]),
         .testTarget(name: "CaptureCoreTests", dependencies: ["CaptureCore", .product(name: "VisionCore", package: "vision")])
     ]

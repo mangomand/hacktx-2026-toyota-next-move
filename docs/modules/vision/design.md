@@ -1,8 +1,16 @@
 # Vision module design handoff
 
-Status: design-only, contract-aligned with canonical contracts v0.1.0 (2026-10-24).
+Status: VisionCore implemented; asset/shader prototype authored against canonical contracts v0.1.0 (2026-10-25).
 
 ## Scope
+
+The capture adapter accepts real RGBA pixel inputs and computes deterministic blur,
+exposure clipping, and frame-to-frame motion metrics. Native `CGImage` and
+`CVPixelBuffer` initializers are compiled when their Apple frameworks are available;
+the portable pixel value keeps Linux tests reproducible. Region membership is an
+explicit caller input. The adapter never infers a region or a vehicle condition from
+an image merely being present. Its result exposes evidence availability, missing
+regions, and a prompt suitable for iOS follow-up capture.
 
 ## MVP priority
 
@@ -46,15 +54,27 @@ These are fixture names and behavior targets, not wire-schema additions:
 
 ## Judge-facing visual quality bar
 
-The current `VisualMap` region coverage output is a debug/data representation only. It must not be presented as the finished 2.5D vehicle experience. The judge-facing MVP should use one recognizable Toyota-like vehicle asset in perspective/isometric view with believable body volumes, windows, wheels, lights, seams, materials, lighting, depth, and controlled rotation. Prefer a RealityKit/USDZ or glTF asset; a polished stylized asset or turntable fallback is acceptable when it preserves surface readability.
+`vision/assets/nextmove-crown.glb` is the current detailed vehicle asset, based on Toyota Crown athlete s210 by Black Snow (CC BY 4.0). The editable Blender source, actual renders and animated material study accompany it. Separate panels, glass, tires, wheels, lamps, trim and authored anchors preserve the car's recognizability. The source geometry is attributed; this project authors its inspection materials and reveal fields. The current centered notification/debug panel is outside this module. See `asset-strategy.md` for exact artifacts and native integration limits.
 
-Findings must attach to actual model surfaces through stable surface anchors (panel, tire, windshield, or light), rendered as pins, highlights, or callouts. Observed surfaces can resolve with evidence-backed color/state; unseen surfaces remain neutral grey; low-confidence or quality-limited surfaces remain amber. The twelve canonical `regionId` values remain metadata behind the asset and are never rendered as twelve flat pills or a top-down labeled outline. The first hero scenario should show one coherent side/rear walkaround with one visible observation and its evidence/callout, while explicitly showing an unseen neutral side.
+## AR scan interaction contract
 
-The internal seam should separate asset geometry/surface anchors from canonical coverage and finding payloads. A turntable is a presentation fallback, not a claim of full reconstruction: controlled rotation must never reveal unobserved surfaces as known.
+During capture, camera-aligned contours and prompts remain the primary experience. After evidence is accepted, the client may transition to the GLB hero view. Canonical region IDs remain metadata behind the asset; they are not rendered as a flat twelve-pill map. A finding pin or highlight may attach only to a matching `VehicleSurfaceAnchor` with evidence. An anchor never creates coverage.
 
-## Simplified geometry and progressive reconstruction
+## Observation-driven material reveal prototype
 
-Use an explicitly illustrative 2.5D template, not a measured reconstruction: a normalized cuboid body and cabin with wheel markers. Proposed vehicle-local axes are x right, y up, z forward; dimensions and patch placement are synthetic display choices, never measurements. Anchor the twelve canonical regions to template patches; interior and trunk patches are separate inset surfaces. Overlapping camera sectors do not imply observation of hidden surfaces. Render unobserved patches as unknown; a usable region view only maps its supported patch and never fills its entire hidden volume. Patch geometry and observation provenance remain internal; the Wave 2 public output is the canonical region coverage plus visible findings.
+The renderer should reveal the approved vehicle asset from its actual mesh inward/outward along authored UVs, normals, and surface masks. `MaterialReveal` is the prototype handoff: `neutral` for unseen/blocked, `uncertain` for partial quality, and `revealed` for quality-gated coverage. Progress and spread radius are bounded animation inputs, not screen-space colors. The renderer should use a mesh-local mask or signed-distance/UV field with eased temporal growth, preserving panel seams, curvature, windows, tires, and lights. It must never use flat region fills, stickers, flood fills, or painted blobs.
+
+Finding accents are separate from material emergence: pins, thin outlines, or restrained callouts use `FindingCalloutState` and never recolor an entire surface. Asset requirements are a clean named mesh hierarchy, stable UVs, body/window/tire/light material groups, authored anchor IDs, and a revisioned USDZ/glTF export. A RealityKit material modifier or Metal shader is the preferred implementation; Blender is useful for topology/material validation and turntable review, not as a runtime dependency. The first hero review should show one rear-left walkaround with neutral unseen surfaces, amber partial surfaces, a soft reveal spreading over one observed panel, and one restrained finding accent.
+
+The renderer's shader seam is mesh-local: sample an authored UV/vertex mask, apply an eased growth radius around the evidence anchor, and blend neutral gray into the asset's authored material. Partial evidence uses an amber tint at low opacity; covered evidence reveals the authored material. The animation is bounded and reversible, and finding accents are a second pass. No screen-space flood fill, sticker, or full-region recolor is permitted.
+
+## Camera-only baseline
+
+The primary hardware path is the user's iPhone 15 Plus: ordinary RGB camera frames plus camera motion/pose and optional IMU/world-tracking signals where available. Vision consumes decoded pixels for quality and semantic evidence. The adapter selects `cameraGuided` when camera and world tracking are available, or labeled `replayDemo` when baseline capture is unavailable. Missing sensing capability never creates coverage; unknown states remain explicit.
+
+## Asset geometry and progressive evidence
+
+The old cuboid/flat region map is a debug representation and is superseded for vehicle presentation. The detailed Crown asset is an authored template, not a measured reconstruction or evidence that hidden surfaces were seen. Canonical region coverage controls visibility/uncertainty only through explicitly authored surface domains. Each reveal field follows mesh-edge shortest paths and has a permission channel; unknown vertices remain neutral at every animation radius. The illustrative front/left reveal study does not consume customer evidence. Runtime integration must provide accepted evidence permissions and revision-specific anchors before applying the shader to live scan output.
 
 ## Detector and rule plan
 

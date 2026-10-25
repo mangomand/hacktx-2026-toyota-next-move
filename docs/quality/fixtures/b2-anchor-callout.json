@@ -1,0 +1,16 @@
+{
+  "format": "qa-b2-anchor-callout-v1",
+  "metadataOnly": true,
+  "scenarioId": "replay-20261024",
+  "source": {"mode":"synthetic_replay", "label":"Replay", "liveClaim":false, "session":"ios/replay/replay-scan-session.json"},
+  "regions": {
+    "front": {"state":"covered", "tone":"neutral", "anchor": {"id":"anchor-front-1", "evidenceRefs":["ios/replay/frame-001.json"], "finding":"Visible mark-like area; glare may affect assessment."}},
+    "rear-left": {"state":"partial", "tone":"amber", "anchor": null},
+    "trunk": {"state":"unseen", "tone":"neutral", "anchor": null}
+  },
+  "finding": {
+    "id":"finding-front-visible-1", "regionId":"front", "status":"not_a_diagnosis", "evidenceRefs":["ios/replay/frame-001.json"],
+    "copy":"Visible mark-like area in the front frame; glare may affect assessment.",
+    "nextAction":"Request a clearer view or schedule an inspection."
+  }
+}

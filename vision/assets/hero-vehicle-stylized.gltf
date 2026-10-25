@@ -1,0 +1,218 @@
+{
+  "asset": {
+    "version": "2.0",
+    "generator": "Toyota Next Move synthetic stylized fallback"
+  },
+  "scene": 0,
+  "scenes": [
+    {
+      "nodes": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "body_shell",
+      "mesh": 0,
+      "extras": {
+        "materialSlot": 0
+      }
+    },
+    {
+      "name": "hood",
+      "mesh": 0,
+      "extras": {
+        "materialSlot": 1
+      }
+    },
+    {
+      "name": "cabin",
+      "mesh": 0,
+      "extras": {
+        "materialSlot": 2
+      }
+    },
+    {
+      "name": "windshield",
+      "mesh": 0,
+      "extras": {
+        "materialSlot": 3
+      }
+    },
+    {
+      "name": "rear_glass",
+      "mesh": 0,
+      "extras": {
+        "materialSlot": 4
+      }
+    },
+    {
+      "name": "wheel",
+      "mesh": 0,
+      "extras": {
+        "materialSlot": 5
+      }
+    },
+    {
+      "name": "wheel",
+      "mesh": 0,
+      "extras": {
+        "materialSlot": 6
+      }
+    },
+    {
+      "name": "wheel",
+      "mesh": 0,
+      "extras": {
+        "materialSlot": 7
+      }
+    },
+    {
+      "name": "wheel",
+      "mesh": 0,
+      "extras": {
+        "materialSlot": 8
+      }
+    },
+    {
+      "name": "headlamp",
+      "mesh": 0,
+      "extras": {
+        "materialSlot": 9
+      }
+    },
+    {
+      "name": "tail_lamp",
+      "mesh": 0,
+      "extras": {
+        "materialSlot": 10
+      }
+    },
+    {
+      "name": "headlamp",
+      "mesh": 0,
+      "extras": {
+        "materialSlot": 11
+      }
+    },
+    {
+      "name": "tail_lamp",
+      "mesh": 0,
+      "extras": {
+        "materialSlot": 12
+      }
+    },
+    {
+      "name": "side_trim",
+      "mesh": 0,
+      "extras": {
+        "materialSlot": 13
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "hero-vehicle-geometry",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0
+          },
+          "indices": 1
+        }
+      ]
+    }
+  ],
+  "buffers": [
+    {
+      "uri": "data:application/octet-stream;base64,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ZABmAGcAZABnAGUAZgBoAGkAZgBpAGcAaABqAGsAaABrAGkAagBsAG0AagBtAGsAbABuAG8AbABvAG0AbgBwAHEAbgBxAG8AcAByAHMAcABzAHEAcgB0AHUAcgB1AHMAdAB2AHcAdAB3AHUAdgBQAFEAdgBRAHcAeAB6AHsAeAB7AHkAegB8AH0AegB9AHsAfAB+AH8AfAB/AH0AfgCAAIEAfgCBAH8AgACCAIMAgACDAIEAggCEAIUAggCFAIMAhACGAIcAhACHAIUAhgCIAIkAhgCJAIcAiACKAIsAiACLAIkAigCMAI0AigCNAIsAjACOAI8AjACPAI0AjgCQAJEAjgCRAI8AkACSAJMAkACTAJEAkgCUAJUAkgCVAJMAlACWAJcAlACXAJUAlgCYAJkAlgCZAJcAmACaAJsAmACbAJkAmgCcAJ0AmgCdAJsAnACeAJ8AnACfAJ0AngB4AHkAngB5AJ8AoACiAKMAoACjAKEAogCkAKUAogClAKMApACmAKcApACnAKUApgCoAKkApgCpAKcAqACqAKsAqACrAKkAqgCsAK0AqgCtAKsArACuAK8ArACvAK0ArgCwALEArgCxAK8AsACyALMAsACzALEAsgC0ALUAsgC1ALMAtAC2ALcAtAC3ALUAtgC4ALkAtgC5ALcAuAC6ALsAuAC7ALkAugC8AL0AugC9ALsAvAC+AL8AvAC/AL0AvgDAAMEAvgDBAL8AwADCAMMAwADDAMEAwgDEAMUAwgDFAMMAxADGAMcAxADHAMUAxgCgAKEAxgChAMcAyADJAMoAyADKAMsAzADPAM4AzADOAM0AyADMAM0AyADNAMkAyQDNAM4AyQDOAMoAygDOAM8AygDPAMsAzADIAMsAzADLAM8A0ADRANIA0ADSANMA1ADXANYA1ADWANUA0ADUANUA0ADVANEA0QDVANYA0QDWANIA0gDWANcA0gDXANMA1ADQANMA1ADTANcA2ADZANoA2ADaANsA3ADfAN4A3ADeAN0A2ADcAN0A2ADdANkA2QDdAN4A2QDeANoA2gDeAN8A2gDfANsA3ADYANsA3ADbAN8A4ADhAOIA4ADiAOMA5ADnAOYA5ADmAOUA4ADkAOUA4ADlAOEA4QDlAOYA4QDmAOIA4gDmAOcA4gDnAOMA5ADgAOMA5ADjAOcA6ADpAOoA6ADqAOsA7ADvAO4A7ADuAO0A6ADsAO0A6ADtAOkA6QDtAO4A6QDuAOoA6gDuAO8A6gDvAOsA7ADoAOsA7ADrAO8A",
+      "byteLength": 4560
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 2880,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 2880,
+      "byteLength": 1680,
+      "target": 34963
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 240,
+      "type": "VEC3",
+      "min": [
+        -2,
+        -0.1,
+        -4
+      ],
+      "max": [
+        2,
+        2,
+        4
+      ]
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5123,
+      "count": 840,
+      "type": "SCALAR"
+    }
+  ],
+  "materials": [
+    {
+      "name": "body-paint"
+    },
+    {
+      "name": "roof-trim"
+    },
+    {
+      "name": "glass"
+    },
+    {
+      "name": "tire-rubber"
+    },
+    {
+      "name": "headlamp"
+    },
+    {
+      "name": "tail-lamp"
+    },
+    {
+      "name": "seam-trim"
+    }
+  ],
+  "extras": {
+    "provenance": "synthetic_fallback",
+    "license": "generated in repo; no Toyota trademark/model claim",
+    "revision": "hero-stylized-v1",
+    "surfaceAnchors": [
+      "rear-panel",
+      "rear-left-panel",
+      "right-side-panel",
+      "front-windshield"
+    ]
+  }
+}

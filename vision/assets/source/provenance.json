@@ -1,0 +1,16 @@
+{
+  "asset": "Toyota Crown athlete s210",
+  "author": "Black Snow",
+  "authorURL": "https://sketchfab.com/BlackSnow02",
+  "sourceURL": "https://sketchfab.com/3d-models/138a753d04dd4d8f8982d8f5583d212d",
+  "license": "CC BY 4.0",
+  "licenseURL": "https://creativecommons.org/licenses/by/4.0/",
+  "sourceDistributor": "https://github.com/pedrosoandre/carros",
+  "distributorCommit": "2d18dfd9db96bbf0d9cffa949deaf7f571388cbf",
+  "downloadPath": "assets/toyota-crown-athlete.glb",
+  "sourceSHA256": "622cf537667be14463c294ef8b1a96da458e90e6e3b28b9e097e6b41a6a7bd9f",
+  "sourcePreparation": "Distributor simplified geometry and meshopt-compressed; decoded losslessly with glTF Transform 4.4.2 copy.",
+  "modifications": "Inspection material authoring; per-surface geodesic reveal UV field; authored anchors; studio lighting; controlled orbit. Original mesh created by Black Snow, not by this project.",
+  "licenseVerifiedVia": "Sketchfab public model metadata, 2026-10-25",
+  "licenseSlug": "by"
+}
