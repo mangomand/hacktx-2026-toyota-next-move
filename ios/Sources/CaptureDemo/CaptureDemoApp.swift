@@ -93,7 +93,7 @@ private struct GuidedCaptureView: View {
                         Button("Finish") { model.finishScan() }.disabled(model.coveredCount == 0)
                             .accessibilityLabel(model.coveredCount == 0 ? "Finish unavailable until evidence is captured" : "Finish scan")
                     }.font(.headline).padding(.horizontal, 22).padding(.top, 8)
-                    Text(model.scanMessage).font(.body.weight(.semibold)).lineLimit(2).fixedSize(horizontal: false, vertical: true)
+                    Text(model.scanMessage).font(.body.weight(.semibold)).fixedSize(horizontal: false, vertical: true)
                         .multilineTextAlignment(.center).padding(.horizontal, 18).padding(.vertical, 12)
                         .frame(maxWidth: proxy.size.width - 42)
                         .background(.ultraThinMaterial, in: Capsule()).id(model.scanMessage)
