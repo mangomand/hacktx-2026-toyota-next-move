@@ -20,5 +20,12 @@ jobs:
           swift-version: '6.0'
       - name: Run tests
         run: swift test --package-path ios
+      - name: Run VisionCore tests
+        run: swift test --package-path vision
       - name: Build CaptureDemo
         run: swift build --package-path ios --product CaptureDemo
+      - name: Build iOS simulator app
+        run: >-
+          xcodebuild -project ios/CaptureDemo.xcodeproj -scheme CaptureDemo
+          -sdk iphonesimulator -destination 'generic/platform=iOS Simulator'
+          CODE_SIGNING_ALLOWED=NO build
