@@ -63,6 +63,7 @@ struct CaptureChecklistView: View {
 private struct GuidedCaptureView: View {
     @ObservedObject var model: CapturePresentationModel
     var body: some View {
+        let pulseStatus = model.captureStatus.lowercased()
         GeometryReader { proxy in
             ZStack {
 #if canImport(ARKit) && canImport(UIKit)
@@ -98,6 +99,7 @@ private struct GuidedCaptureView: View {
                     Spacer()
                     VStack(spacing: 10) {
                         VehicleCoverageMap(progress: model.progress)
+                            .vehicleObservationPulse(isVisible: model.vehicleMatchStatus == "Vehicle visible" && !pulseStatus.contains("no new coverage recorded") && !pulseStatus.contains("analyzing") && !pulseStatus.contains("paused") && !pulseStatus.contains("resumed") && !pulseStatus.contains("unavailable") && !pulseStatus.contains("failed") && !pulseStatus.contains("could not complete"))
                             .frame(height: min(220, proxy.size.height * 0.27))
                             .accessibilityLabel("Vehicle scan progress. Neutral surfaces are unseen; colored surfaces have been observed.")
                         HStack(spacing: 18) {
@@ -120,11 +122,6 @@ private struct GuidedCaptureView: View {
 #if canImport(ARKit) && canImport(UIKit)
 private extension Notification.Name { static let resetARCalibration = Notification.Name("resetARCalibration") }
 
-private final class VehiclePulseOverlay: UIView {
-    // Reserved for evidence-backed surface geometry. No generic pulse is drawn.
-    func hide() { isHidden = true }
-}
-
 private struct ARCameraScannerView: UIViewRepresentable {
     @ObservedObject var model: CapturePresentationModel
 
@@ -133,21 +130,18 @@ private struct ARCameraScannerView: UIViewRepresentable {
     func makeUIView(context: Context) -> ARSCNView {
         let view = ARSCNView(); view.scene = SCNScene(); view.automaticallyUpdatesLighting = true; view.backgroundColor = .black; view.debugOptions = []
         context.coordinator.sceneView = view
-        context.coordinator.attachPulseOverlay()
         let config = ARWorldTrackingConfiguration(); view.session.delegate = context.coordinator; view.session.run(config)
         context.coordinator.installResetObserver(configuration: config)
         return view
     }
     func updateUIView(_ view: ARSCNView, context: Context) {
         context.coordinator.sceneView = view
-        context.coordinator.attachPulseOverlay()
     }
     static func dismantleUIView(_ view: ARSCNView, coordinator: Coordinator) { coordinator.teardown() }
 
     final class Coordinator: NSObject, ARSessionDelegate {
         weak var model: CapturePresentationModel?
         weak var sceneView: ARSCNView?
-        private let pulseOverlay = VehiclePulseOverlay()
         private var resetObserver: NSObjectProtocol?
         private var configuration: ARWorldTrackingConfiguration?
         init(model: CapturePresentationModel) { self.model = model }
@@ -159,22 +153,11 @@ private struct ARCameraScannerView: UIViewRepresentable {
             }
         }
 
-        @MainActor
-        func attachPulseOverlay() {
-            guard let sceneView else { return }
-            if pulseOverlay.superview !== sceneView {
-                sceneView.addSubview(pulseOverlay)
-                pulseOverlay.frame = .zero
-            }
-        }
-
         func teardown() {
             if let resetObserver {
                 NotificationCenter.default.removeObserver(resetObserver)
                 self.resetObserver = nil
             }
-            pulseOverlay.hide()
-            pulseOverlay.removeFromSuperview()
             sceneView?.session.pause()
             configuration = nil
             sceneView = nil
@@ -182,7 +165,6 @@ private struct ARCameraScannerView: UIViewRepresentable {
 
         func sessionWasInterrupted(_ session: ARSession) {
             Task { @MainActor [weak self] in
-                self?.pulseOverlay.hide()
                 self?.model?.handleARSessionInterruption()
             }
         }
@@ -191,14 +173,12 @@ private struct ARCameraScannerView: UIViewRepresentable {
             Task { @MainActor [weak self] in
                 guard let self, let configuration = self.configuration else { return }
                 session.run(configuration, options: [.resetTracking, .removeExistingAnchors])
-                self.pulseOverlay.hide()
                 self.model?.handleARSessionInterruptionEnded()
             }
         }
 
         func session(_ session: ARSession, didFailWithError error: Error) {
             Task { @MainActor [weak self] in
-                self?.pulseOverlay.hide()
                 self?.model?.handleARSessionFailure()
             }
         }
@@ -207,7 +187,6 @@ private struct ARCameraScannerView: UIViewRepresentable {
             let pixelBuffer = frame.capturedImage
             let timestamp = frame.timestamp
             Task { @MainActor [weak self] in
-                self?.attachPulseOverlay()
                 self?.model?.consumeARFrame(pixelBuffer: pixelBuffer, timestamp: timestamp)
             }
         }
@@ -243,9 +222,11 @@ private struct LiveCapturePreview: UIViewRepresentable {
 private struct VehicleCoverageMap: View {
     let progress: CaptureProgress
     var findings: [PresentationFinding] = []
+    var vehicleObservationPulseVisible = false
     @State private var baseRotation: Double = 0
     @GestureState private var dragRotation: Double = 0
     var body: some View {
+        ZStack {
 #if canImport(SceneKit) && canImport(UIKit)
         VStack(spacing: 4) {
             Group {
@@ -275,12 +256,23 @@ private struct VehicleCoverageMap: View {
             }.padding(32)
         }
 #endif
+        }
+        .overlay {
+            VehicleObservationPulse(isVisible: vehicleObservationPulseVisible)
+                .allowsHitTesting(false)
+        }
     }
     private func label(for region: CaptureRegion) -> String { region.rawValue.replacingOccurrences(of: "interior-", with: "int ").capitalized }
     private func color(for state: CoverageState) -> Color { switch state { case .covered: .green; case .partial: .orange; case .blocked: .red; case .unseen: Color.gray.opacity(0.65) } }
     private func mapPosition(_ region: CaptureRegion, in size: CGSize) -> CGPoint {
         let points: [CaptureRegion: CGPoint] = [.front: CGPoint(x: size.width/2, y: 18), .frontLeft: CGPoint(x: size.width*0.24, y: 45), .left: CGPoint(x: size.width*0.12, y: size.height/2), .rearLeft: CGPoint(x: size.width*0.24, y: size.height-45), .rear: CGPoint(x: size.width/2, y: size.height-18), .rearRight: CGPoint(x: size.width*0.76, y: size.height-45), .right: CGPoint(x: size.width*0.88, y: size.height/2), .frontRight: CGPoint(x: size.width*0.76, y: 45), .roof: CGPoint(x: size.width/2, y: size.height/2), .interiorFront: CGPoint(x: size.width*0.42, y: size.height*0.38), .interiorRear: CGPoint(x: size.width*0.58, y: size.height*0.62), .trunk: CGPoint(x: size.width/2, y: size.height*0.82)]
         return points[region] ?? CGPoint(x: size.width/2, y: size.height/2)
+    }
+
+    func vehicleObservationPulse(isVisible: Bool) -> VehicleCoverageMap {
+        var copy = self
+        copy.vehicleObservationPulseVisible = isVisible
+        return copy
     }
 }
 
@@ -312,6 +304,29 @@ private struct SceneKitVehicleView: UIViewRepresentable {
     private func material(_ color: UIColor, state: CoverageState) -> SCNMaterial { let m = SCNMaterial(); m.diffuse.contents = state == .covered ? color : (state == .partial ? UIColor.orange : UIColor(white: 0.38, alpha: 1)); m.lightingModel = .physicallyBased; return m }
 }
 #endif
+
+private struct VehicleObservationPulse: View {
+    let isVisible: Bool
+    @State private var isExpanded = false
+
+    var body: some View {
+        Circle()
+            .stroke(Color.cyan.opacity(isVisible ? (isExpanded ? 0.2 : 0.7) : 0), lineWidth: 3)
+            .frame(width: 58, height: 58)
+            .scaleEffect(isVisible && isExpanded ? 1.18 : 0.88)
+            .onAppear { updateAnimation(for: isVisible) }
+            .onChange(of: isVisible) { _, newValue in updateAnimation(for: newValue) }
+    }
+
+    private func updateAnimation(for visible: Bool) {
+        guard visible else {
+            withAnimation(.easeOut(duration: 0.16)) { isExpanded = false }
+            return
+        }
+        isExpanded = false
+        withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true)) { isExpanded = true }
+    }
+}
 
 #if canImport(WebKit) && canImport(UIKit)
 /// Loads the authored Blender GLB through the bundled WebGL material viewer.
