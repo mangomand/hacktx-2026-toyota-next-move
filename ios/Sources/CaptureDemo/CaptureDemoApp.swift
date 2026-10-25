@@ -228,7 +228,7 @@ private struct VehicleCoverageMap: View {
     var findings: [PresentationFinding] = []
     var vehicleObservationPulseVisible = false
     @State private var baseRotation: Double = 0
-    @GestureState private var dragRotation: Double = 0
+    @State private var dragRotation: Double = 0
     var body: some View {
         ZStack {
 #if canImport(SceneKit) && canImport(UIKit)
@@ -243,9 +243,14 @@ private struct VehicleCoverageMap: View {
 #endif
             }
                 .rotation3DEffect(.degrees(baseRotation + dragRotation), axis: (x: 0, y: 1, z: 0))
-                .gesture(DragGesture(minimumDistance: 4)
-                    .updating($dragRotation) { value, state, _ in state = Double(value.translation.width) * 0.42 }
-                    .onEnded { value in baseRotation += Double(value.translation.width) * 0.42 })
+                .simultaneousGesture(DragGesture(minimumDistance: 4)
+                    .onChanged { value in
+                        dragRotation = Double(value.translation.width) * 0.42
+                    }
+                    .onEnded { value in
+                        baseRotation += Double(value.translation.width) * 0.42
+                        dragRotation = 0
+                    })
             Text("Drag to rotate").font(.caption2).foregroundStyle(.white.opacity(0.62))
         }
 #else
