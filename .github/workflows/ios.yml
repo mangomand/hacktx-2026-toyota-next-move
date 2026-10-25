@@ -37,6 +37,6 @@ jobs:
         run: >-
           xcodebuild -project ios/CaptureDemo.xcodeproj
           -scheme CaptureDemo
-          -destination 'platform=iOS Simulator,name=iPhone 17'
+          -destination 'generic/platform=iOS Simulator'
           -derivedDataPath /tmp/toyota-next-move-derived
           build
