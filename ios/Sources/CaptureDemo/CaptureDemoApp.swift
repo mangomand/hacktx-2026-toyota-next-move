@@ -29,6 +29,7 @@ struct CaptureDemoApp: App {
     }
 }
 
+@MainActor
 struct CaptureChecklistView: View {
     @StateObject private var model = CapturePresentationModel()
 

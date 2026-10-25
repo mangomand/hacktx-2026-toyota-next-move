@@ -1,31 +1,42 @@
 name: iOS checks
 
 on:
-  pull_request:
   push:
     branches:
-      - main
-      - feat/ar-scan-pulse
+      - "**"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
 
 jobs:
   swift:
     name: Swift tests and build
-    runs-on: macos-14
+    runs-on: macos-15
+    timeout-minutes: 20
     steps:
       - name: Check out source
         uses: actions/checkout@v4
-      - name: Select Swift toolchain
-        uses: swift-actions/setup-swift@v2
-        with:
-          swift-version: '6.0'
+
       - name: Run tests
-        run: swift test --package-path ios
+        # Swift 6.0.3 aborts while reconstructing SwiftUI StateObject debug
+        # types; this frontend flag disables only that compiler assertion.
+        run: xcrun --toolchain swift --run swift test --package-path ios --disable-sandbox -Xswiftc -Xfrontend -Xswiftc -disable-round-trip-debug-types
+
       - name: Run VisionCore tests
-        run: swift test --package-path vision
+        run: xcrun --toolchain swift --run swift test --package-path vision --disable-sandbox -Xswiftc -Xfrontend -Xswiftc -disable-round-trip-debug-types
+
       - name: Build CaptureDemo
-        run: swift build --package-path ios --product CaptureDemo
+        run: xcrun --toolchain swift --run swift build --package-path ios --product CaptureDemo -Xswiftc -Xfrontend -Xswiftc -disable-round-trip-debug-types
+
       - name: Build iOS simulator app
         run: >-
-          xcodebuild -project ios/CaptureDemo.xcodeproj -scheme CaptureDemo
-          -sdk iphonesimulator -destination 'generic/platform=iOS Simulator'
-          CODE_SIGNING_ALLOWED=NO build
+          xcodebuild -project ios/CaptureDemo.xcodeproj
+          -scheme CaptureDemo
+          -destination 'generic/platform=iOS Simulator'
+          -derivedDataPath /tmp/toyota-next-move-derived
+          build
