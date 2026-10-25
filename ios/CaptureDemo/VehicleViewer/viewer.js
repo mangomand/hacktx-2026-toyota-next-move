@@ -33,7 +33,7 @@ controls.minDistance=5.7;controls.maxDistance=13;
 controls.minPolarAngle=.50;controls.maxPolarAngle=1.48;
 const uniforms={radius:{value:1.2},beauty:{value:1},inspectionState:{value:0},pigment:{value:new THREE.Color(.018,.075,.34)},amber:{value:new THREE.Color(.72,.38,.08)}};
 const reduced=matchMedia('(prefers-reduced-motion: reduce)');
-let started=null,mode='beauty',model,ready=false,shaderMaterials=0;
+let started=null,mode='beauty',model,ready=false,shaderMaterials=0,pendingProgress=null;
 const state=document.querySelector('#state');
 function setMode(next){
  mode=next;uniforms.beauty.value=next==='beauty'?1:0;uniforms.inspectionState.value=next==='uncertain'?1:(next==='reveal'?2:0);
@@ -42,6 +42,9 @@ function setMode(next){
  if(next==='reveal'){started=performance.now();uniforms.radius.value=reduced.matches?1.2:-.12;state.textContent='Accepted evidence study · only permitted surfaces resolve';}
  else if(next==='uncertain'){started=performance.now();uniforms.radius.value=reduced.matches?1.2:-.12;state.textContent='Partial evidence · amber uncertainty stays visible';}
  else{started=null;state.textContent='Asset beauty view · no inspection assessment';}
+}
+function applyProgress(progress){
+ setMode('reveal');started=null;uniforms.radius.value=-.12+1.32*progress;
 }
 document.querySelector('#beauty').onclick=()=>setMode('beauty');
 document.querySelector('#uncertain').onclick=()=>setMode('uncertain');
@@ -79,8 +82,11 @@ try{
   };
   material.customProgramCacheKey=()=> 'nextmove-geodesic-reveal-2';
  });
- document.querySelector('#loading').remove();ready=true;
- window.vehicleStudy={get ready(){return ready},get materialCount(){return shaderMaterials},get mode(){return mode},setProgress(progress){if(!Number.isFinite(progress)||progress<0||progress>1)throw new Error('Progress must be 0...1');setMode('reveal');started=null;uniforms.radius.value=-.12+1.32*progress;},reset:()=>setMode('beauty')};
+ document.querySelector('#loading').remove();
+ window.vehicleStudy={get ready(){return ready},get materialCount(){return shaderMaterials},get mode(){return mode},setProgress(progress){if(!Number.isFinite(progress)||progress<0||progress>1)throw new Error('Progress must be 0...1');pendingProgress=progress;if(ready)applyProgress(progress);},reset:()=>setMode('beauty')};
+ ready=true;
+ if(pendingProgress!==null)applyProgress(pendingProgress);
+ window.webkit?.messageHandlers?.vehicleStudyReady?.postMessage({ready:true});
 }catch(error){document.querySelector('#loading').remove();document.querySelector('#error').textContent=`Vehicle load failed: ${error.message}`;console.error(error);}
 function resize(){const {width,height}=viewportSize();camera.aspect=width/height;camera.updateProjectionMatrix();renderer.setSize(width,height,false);}
 addEventListener('resize',resize);

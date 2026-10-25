@@ -345,8 +345,14 @@ private struct VehicleObservationPulse: View {
 /// of substituting the old rounded-box SceneKit placeholder.
 private struct VehicleGLBView: UIViewRepresentable {
     let progress: CaptureProgress
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
     func makeUIView(context: Context) -> WKWebView {
-        let view = WKWebView(frame: .zero, configuration: WKWebViewConfiguration())
+        let configuration = WKWebViewConfiguration()
+        configuration.userContentController.add(context.coordinator, name: "vehicleStudyReady")
+        let view = WKWebView(frame: .zero, configuration: configuration)
+        context.coordinator.webView = view
+        view.navigationDelegate = context.coordinator
         view.isOpaque = false
         view.backgroundColor = .clear
         view.scrollView.contentInsetAdjustmentBehavior = .never
@@ -359,7 +365,34 @@ private struct VehicleGLBView: UIViewRepresentable {
     func updateUIView(_ view: WKWebView, context: Context) {
         let covered = progress.coverage.values.filter { $0 == .covered }.count
         let ratio = Double(covered) / Double(max(1, CaptureRegion.allCases.count))
-        view.evaluateJavaScript("window.vehicleStudy && window.vehicleStudy.setProgress(\(ratio));", completionHandler: nil)
+        context.coordinator.requestProgress(ratio)
+    }
+
+    final class Coordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
+        weak var webView: WKWebView?
+        private var pendingProgress: Double?
+        private var isReady = false
+
+        func requestProgress(_ ratio: Double) {
+            pendingProgress = ratio
+            if isReady { applyPendingProgress() }
+        }
+
+        func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+            guard message.name == "vehicleStudyReady" else { return }
+            isReady = true
+            applyPendingProgress()
+        }
+
+        private func applyPendingProgress() {
+            guard let progress = pendingProgress, let webView else { return }
+            let script = "window.vehicleStudy && window.vehicleStudy.setProgress(\(progress));"
+            webView.evaluateJavaScript(script) { [weak self] _, error in
+                guard error == nil else { return }
+                guard self?.pendingProgress == progress else { return }
+                self?.pendingProgress = nil
+            }
+        }
     }
 }
 #endif
