@@ -5,7 +5,15 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.75));
-renderer.setSize(innerWidth,innerHeight);
+renderer.domElement.style.width='100%';
+renderer.domElement.style.height='100%';
+function viewportSize(){
+ const root=document.documentElement;
+ const body=document.body;
+ return {width:Math.max(1,root.clientWidth||body.clientWidth||innerWidth),height:Math.max(1,root.clientHeight||body.clientHeight||innerHeight)};
+}
+const viewport=viewportSize();
+renderer.setSize(viewport.width,viewport.height,false);
 renderer.setClearColor(0x141517,1);
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure=1.1;
@@ -15,7 +23,7 @@ const pmrem=new THREE.PMREMGenerator(renderer);
 const environment=new RoomEnvironment();
 scene.environment=pmrem.fromScene(environment,.04).texture;
 environment.dispose();
-const camera=new THREE.PerspectiveCamera(35,innerWidth/innerHeight,.05,70);
+const camera=new THREE.PerspectiveCamera(35,viewport.width/viewport.height,.05,70);
 const heroCamera=new THREE.Vector3(6,3.05,7);
 camera.position.copy(heroCamera);
 const controls=new OrbitControls(camera,renderer.domElement);
@@ -74,8 +82,9 @@ try{
  document.querySelector('#loading').remove();ready=true;
  window.vehicleStudy={get ready(){return ready},get materialCount(){return shaderMaterials},get mode(){return mode},setProgress(progress){if(!Number.isFinite(progress)||progress<0||progress>1)throw new Error('Progress must be 0...1');setMode('reveal');started=null;uniforms.radius.value=-.12+1.32*progress;},reset:()=>setMode('beauty')};
 }catch(error){document.querySelector('#loading').remove();document.querySelector('#error').textContent=`Vehicle load failed: ${error.message}`;console.error(error);}
-function resize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);}
+function resize(){const {width,height}=viewportSize();camera.aspect=width/height;camera.updateProjectionMatrix();renderer.setSize(width,height,false);}
 addEventListener('resize',resize);
+new ResizeObserver(resize).observe(document.documentElement);
 function draw(now){
  requestAnimationFrame(draw);
  if(started!==null&&!reduced.matches){const t=THREE.MathUtils.clamp((now-started-300)/2200,0,1);const eased=t*t*(3-2*t);uniforms.radius.value=-.12+1.32*eased;if(t===1){started=null;state.textContent=mode==='uncertain'?'Partial evidence remains amber · unresolved surfaces stay neutral':'Accepted surfaces resolved · roof, rear and far side stay neutral';}}
