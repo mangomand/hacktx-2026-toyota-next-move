@@ -207,8 +207,8 @@
 			};
 			name = Release;
 		};
-		A80000000000000000000005 /* VisionCore Debug */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGNING_ALLOWED = NO; DEVELOPMENT_TEAM = 5MVDJUR5U6; IPHONEOS_DEPLOYMENT_TARGET = 17.0; PRODUCT_NAME = VisionCore; SDKROOT = iphoneos; SWIFT_VERSION = 5.9;}; name = Debug; };
-		A80000000000000000000006 /* VisionCore Release */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGNING_ALLOWED = NO; DEVELOPMENT_TEAM = 5MVDJUR5U6; IPHONEOS_DEPLOYMENT_TARGET = 17.0; PRODUCT_NAME = VisionCore; SDKROOT = iphoneos; SWIFT_VERSION = 5.9;}; name = Release; };
+		A80000000000000000000005 /* VisionCore Debug */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGNING_ALLOWED = NO; SKIP_INSTALL = YES; DEVELOPMENT_TEAM = 5MVDJUR5U6; IPHONEOS_DEPLOYMENT_TARGET = 17.0; PRODUCT_NAME = VisionCore; SDKROOT = iphoneos; SWIFT_VERSION = 5.9;}; name = Debug; };
+		A80000000000000000000006 /* VisionCore Release */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGNING_ALLOWED = NO; SKIP_INSTALL = YES; DEVELOPMENT_TEAM = 5MVDJUR5U6; IPHONEOS_DEPLOYMENT_TARGET = 17.0; PRODUCT_NAME = VisionCore; SDKROOT = iphoneos; SWIFT_VERSION = 5.9;}; name = Release; };
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
