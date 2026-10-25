@@ -317,10 +317,10 @@ final class CapturePresentationModel: ObservableObject {
             updateGuide()
             let names = newRegions.map { CaptureGuide.step(for: $0).title }.sorted().joined(separator: ", ")
             captureStatus = "Recorded \(names). \(nextGuideStep?.instruction ?? "All requested areas have observations.")"
-            setScanMessage(nextGuideStep.map { "\($0.title): \($0.instruction)" } ?? "Scan complete. You can finish.")
+            setScanMessage(nextGuideStep?.instruction ?? "Scan complete. You can finish.")
         } else if observation.usability != .unusable && !candidates.isEmpty && candidates.allSatisfy({ progress[$0] == .covered }) {
             captureStatus = nextGuideStep?.instruction ?? "All required areas have observations. You can finish the scan."
-            setScanMessage(nextGuideStep.map { "\($0.title): \($0.instruction)" } ?? "Scan complete. You can finish.")
+            setScanMessage(nextGuideStep?.instruction ?? "Scan complete. You can finish.")
         } else if !candidates.isEmpty && observation.usability != .unusable {
             captureStatus = "\(observation.guidance) Hold this view briefly to confirm it."
             setScanMessage("Hold steady to confirm this view.")
