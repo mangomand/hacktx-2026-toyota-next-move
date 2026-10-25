@@ -51,3 +51,18 @@ public struct PerceptionRequest: Encodable, Sendable {
     public let imageBase64: String
     public init(frameID: String, jpeg: Data) { self.frameID = frameID; imageBase64 = jpeg.base64EncodedString() }
 }
+
+#if canImport(CoreImage) && canImport(CoreVideo)
+import CoreImage
+import CoreVideo
+
+/// Converts Vision's foreground mask into an image for the vehicle pulse layers.
+public enum VehiclePulseMask {
+    public static func image(from pixelBuffer: CVPixelBuffer, context: CIContext) -> CGImage? {
+        // CALayer.mask clips by alpha, but Vision returns an opaque grayscale
+        // image. Turn black background pixels transparent before compositing.
+        let image = CIImage(cvPixelBuffer: pixelBuffer).applyingFilter("CIMaskToAlpha")
+        return context.createCGImage(image, from: image.extent)
+    }
+}
+#endif

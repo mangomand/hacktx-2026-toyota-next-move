@@ -194,8 +194,7 @@ private final class VehiclePulseOverlay: UIView {
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     func show(maskPixelBuffer: CVPixelBuffer, in bounds: CGRect) {
-        let image = CIImage(cvPixelBuffer: maskPixelBuffer)
-        guard let mask = context.createCGImage(image, from: image.extent), bounds.width > 0, bounds.height > 0 else { hide(); return }
+        guard let mask = VehiclePulseMask.image(from: maskPixelBuffer, context: context), bounds.width > 0, bounds.height > 0 else { hide(); return }
         frame = bounds
         fillMask.contents = mask; glowMask.contents = mask; sweepMask.contents = mask
         isHidden = false
