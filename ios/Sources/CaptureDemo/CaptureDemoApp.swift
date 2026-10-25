@@ -555,7 +555,7 @@ private struct SceneKitVehicleView: UIViewRepresentable {
     private func makeScene() -> SCNScene {
         let scene = SCNScene(); scene.background.contents = UIColor(red: 0.025, green: 0.055, blue: 0.12, alpha: 1)
         let root = scene.rootNode
-        let body = SCNNode(geometry: SCNBox(width: 3.8, height: 0.65, length: 7.0, chamferRadius: 0.35)); body.geometry?.materials = [material(.gray, state: aggregate(.front, .rear, .left, .right))]; root.addChildNode(body)
+        let body = SCNNode(geometry: SCNBox(width: 3.8, height: 0.65, length: 7.0, chamferRadius: 0.35)); body.geometry?.materials = [material(.blue, state: aggregate(.front, .rear, .left, .right))]; root.addChildNode(body)
         let cabin = SCNNode(geometry: SCNBox(width: 3.05, height: 0.85, length: 3.25, chamferRadius: 0.3)); cabin.position.y = 0.68; cabin.geometry?.materials = [material(.blue, state: aggregate(.roof, .interiorFront, .interiorRear))]; root.addChildNode(cabin)
         for x in [-1.72, 1.72] { for z in [-2.35, 2.35] { let wheel = SCNNode(geometry: SCNCylinder(radius: 0.48, height: 0.28)); wheel.eulerAngles.z = .pi / 2; wheel.position = SCNVector3(x, -0.28, z); wheel.geometry?.materials = [material(.black, state: aggregate(z > 0 ? .front : .rear, x < 0 ? .left : .right))]; root.addChildNode(wheel) } }
         for z in [-3.48, 3.48] { let light = SCNNode(geometry: SCNBox(width: 2.2, height: 0.14, length: 0.12, chamferRadius: 0.04)); light.position = SCNVector3(0, 0.04, z); light.geometry?.materials = [material(.yellow, state: progress[z > 0 ? .front : .rear])]; root.addChildNode(light) }
@@ -566,9 +566,21 @@ private struct SceneKitVehicleView: UIViewRepresentable {
         let ambient = SCNNode(); ambient.light = SCNLight(); ambient.light?.type = .ambient; ambient.light?.color = UIColor(white: 0.35, alpha: 1); root.addChildNode(ambient)
         return scene
     }
-    private func aggregate(_ regions: CaptureRegion...) -> CoverageState { regions.contains(where: { progress[$0] == .partial }) ? .partial : (regions.allSatisfy { progress[$0] == .covered } ? .covered : .unseen) }
+    private func aggregate(_ regions: CaptureRegion...) -> CoverageState {
+        if regions.contains(where: { progress[$0] == .partial }) { return .partial }
+        if regions.contains(where: { progress[$0] == .covered }) { return .covered }
+        return .unseen
+    }
     private func markerPosition(_ region: CaptureRegion) -> SCNVector3 { switch region { case .frontLeft: return SCNVector3(-1.9, 0.2, 2.8); case .frontRight: return SCNVector3(1.9, 0.2, 2.8); case .rearLeft: return SCNVector3(-1.9, 0.2, -2.8); case .rearRight: return SCNVector3(1.9, 0.2, -2.8); default: return SCNVector3Zero } }
-    private func material(_ color: UIColor, state: CoverageState) -> SCNMaterial { let m = SCNMaterial(); m.diffuse.contents = state == .covered ? color : (state == .partial ? UIColor.orange : UIColor(white: 0.38, alpha: 1)); m.lightingModel = .physicallyBased; return m }
+    private func material(_ color: UIColor, state: CoverageState) -> SCNMaterial {
+        let m = SCNMaterial()
+        // Every surface starts neutral and changes only when its corresponding
+        // region is observed. This keeps the blue cabin/yellow lights from
+        // looking pre-scanned and makes progress visible during the scan.
+        m.diffuse.contents = state == .covered ? color : (state == .partial ? UIColor.orange : UIColor(white: 0.18, alpha: 1))
+        m.lightingModel = .physicallyBased
+        return m
+    }
 }
 #endif
 
