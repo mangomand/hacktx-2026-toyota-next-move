@@ -162,7 +162,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 9;
 				DEVELOPMENT_TEAM = 5MVDJUR5U6;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = CaptureDemo/Info.plist;
@@ -180,7 +180,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 9;
 				DEVELOPMENT_TEAM = 5MVDJUR5U6;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = CaptureDemo/Info.plist;
@@ -207,8 +207,8 @@
 			};
 			name = Release;
 		};
-		A80000000000000000000005 /* VisionCore Debug */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGNING_ALLOWED = NO; DEVELOPMENT_TEAM = 5MVDJUR5U6; IPHONEOS_DEPLOYMENT_TARGET = 17.0; PRODUCT_NAME = VisionCore; SDKROOT = iphoneos; SWIFT_VERSION = 5.9;}; name = Debug; };
-		A80000000000000000000006 /* VisionCore Release */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGNING_ALLOWED = NO; DEVELOPMENT_TEAM = 5MVDJUR5U6; IPHONEOS_DEPLOYMENT_TARGET = 17.0; PRODUCT_NAME = VisionCore; SDKROOT = iphoneos; SWIFT_VERSION = 5.9;}; name = Release; };
+		A80000000000000000000005 /* VisionCore Debug */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGNING_ALLOWED = NO; SKIP_INSTALL = YES; DEVELOPMENT_TEAM = 5MVDJUR5U6; IPHONEOS_DEPLOYMENT_TARGET = 17.0; PRODUCT_NAME = VisionCore; SDKROOT = iphoneos; SWIFT_VERSION = 5.9;}; name = Debug; };
+		A80000000000000000000006 /* VisionCore Release */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGNING_ALLOWED = NO; SKIP_INSTALL = YES; DEVELOPMENT_TEAM = 5MVDJUR5U6; IPHONEOS_DEPLOYMENT_TARGET = 17.0; PRODUCT_NAME = VisionCore; SDKROOT = iphoneos; SWIFT_VERSION = 5.9;}; name = Release; };
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
