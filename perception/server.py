@@ -7,10 +7,12 @@ import threading
 import urllib.error
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from evaluation import evaluate
 
 REGIONS = ['front', 'front-left', 'left', 'rear-left', 'rear', 'rear-right', 'right',
            'front-right', 'roof', 'interior-front', 'interior-rear', 'trunk']
 MAX_BODY = 2_000_000
+MAX_EVALUATION_BODY = 12_000_000
 SLOTS = threading.BoundedSemaphore(2)
 SCHEMA = {
     'type': 'object', 'additionalProperties': False,
@@ -98,7 +100,7 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(data)
 
     def do_POST(self):
-        if self.path != '/v1/observe':
+        if self.path not in ('/v1/observe', '/v1/evaluate'):
             return self.reply(404, {'error': 'Not found'})
         token = os.environ.get('PERCEPTION_ACCESS_TOKEN', '')
         if not token or not hmac.compare_digest(self.headers.get('Authorization', ''), 'Bearer ' + token):
@@ -107,9 +109,13 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply(429, {'error': 'Analysis busy'})
         try:
             length = int(self.headers.get('Content-Length', '0'))
-            if not 0 < length <= MAX_BODY:
+            limit = MAX_EVALUATION_BODY if self.path == '/v1/evaluate' else MAX_BODY
+            if not 0 < length <= limit:
                 return self.reply(413, {'error': 'Frame too large'})
             data = json.loads(self.rfile.read(length))
+            if self.path == '/v1/evaluate':
+                result = evaluate(data['images'], data['profile'], api_key=os.environ['OPENAI_API_KEY'], model=os.environ.get('OPENAI_VISION_MODEL', 'gpt-4.1-mini'))
+                return self.reply(200, result)
             frame_id = data['frameID']
             if not isinstance(frame_id, str) or not 1 <= len(frame_id) <= 128:
                 raise ValueError('Invalid frame ID')

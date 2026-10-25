@@ -23,7 +23,7 @@ import CaptureCore
 #endif
 import VisionCore
 
-enum CaptureScreen: Equatable { case start, guided, replay, results }
+enum CaptureScreen: Equatable { case start, guided, replay, profile, results }
 
 struct PresentationRecommendation: Equatable {
     let id: String
@@ -75,6 +75,8 @@ final class CapturePresentationModel: ObservableObject {
     @Published private(set) var sensingMode: CaptureSensingMode = .replay
     @Published private(set) var analyzedFrameCount = 0
     @Published private(set) var vehicleMatchStatus = "Looking for the vehicle…"
+    @Published private(set) var evaluation: VehicleEvaluationResult?
+    @Published private(set) var evaluationLoading = false
 #if canImport(AVFoundation)
     private var captureSession: AVCaptureSession?
     var activeCaptureSession: AVCaptureSession? { captureSession }
@@ -100,6 +102,7 @@ final class CapturePresentationModel: ObservableObject {
         perceptionTask = nil
         observationAccumulator.breakContinuity()
         previousEvidence = nil
+        evaluationLoading = false
     }
 
     private func setScanMessage(_ message: String) {
@@ -365,7 +368,7 @@ final class CapturePresentationModel: ObservableObject {
         if usingReplaySource {
             screen = .replay
         } else {
-            buildLiveResults()
+            screen = .profile
         }
     }
 
@@ -408,6 +411,36 @@ final class CapturePresentationModel: ObservableObject {
         replayStatus = "Live camera session finished; no synthetic replay data was substituted."
         errorMessage = nil
         screen = .results
+    }
+
+    func submitEvaluation(_ profile: VehicleEvaluationProfile) {
+        guard profile.isValid else { errorMessage = "Enter a valid income, mileage, vehicle year, and lease details."; return }
+        guard let configuration = PerceptionConfiguration.load() else {
+            errorMessage = "Live evaluation needs a configured analysis server."; return
+        }
+        evaluationLoading = true; errorMessage = nil
+        let generation = sessionGeneration
+        let grouped = Dictionary(observationEvidence.flatMap { region, paths in paths.map { ($0, region) } }, uniquingKeysWith: { first, _ in first })
+        let images = grouped.enumerated().compactMap { index, item -> VehicleEvaluationImage? in
+            let (path, region) = item
+            guard let data = FileManager.default.contents(atPath: path) else { return nil }
+            return VehicleEvaluationImage(evidenceRef: "evidence-\(index + 1)", region: region.rawValue, imageBase64: data.base64EncodedString())
+        }.prefix(24)
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            do {
+                let result = try await PerceptionHTTPClient.evaluate(images: Array(images), profile: profile, configuration: configuration)
+                guard self.sessionGeneration == generation else { return }
+                self.evaluation = result
+                self.visionFindings = result.findings.map { PresentationFinding(id: $0.id, region: $0.region.rawValue, description: $0.issue, evidence: $0.evidenceRefs.joined(separator: ", "), confidence: $0.confidence) }
+                self.findingSummary = result.findings.isEmpty ? "No visible issues were identified." : "\(result.findings.count) visible issue\(result.findings.count == 1 ? "" : "s") identified"
+                self.visionAnalysis = "GPT reviewed \(images.count) evidence images. Findings are visible observations, not a mechanical diagnosis."
+                self.recommendation = PresentationRecommendation(id: "recommendation-live-evaluation", nextMove: result.replacementHorizon, rationale: result.longevityParagraph, confidence: 0.45, caveats: result.uncertainty, basedOn: result.findings.map(\.id), escalation: "human_review")
+                self.evaluationLoading = false; self.screen = .results
+            } catch {
+                self.evaluationLoading = false; self.errorMessage = "The vehicle evaluation could not be completed. Try again."
+            }
+        }
     }
 
     func runReplay() {
@@ -522,6 +555,18 @@ private enum PerceptionHTTPClient {
         let observation = try JSONDecoder().decode(VehicleObservation.self, from: data)
         guard observation.frameID == frameID, observation.isValid else { throw URLError(.cannotParseResponse) }
         return observation
+    }
+
+    static func evaluate(images: [VehicleEvaluationImage], profile: VehicleEvaluationProfile, configuration: PerceptionConfiguration) async throws -> VehicleEvaluationResult {
+        let endpoint = configuration.endpoint.deletingLastPathComponent().appendingPathComponent("evaluate")
+        var request = URLRequest(url: endpoint); request.httpMethod = "POST"; request.timeoutInterval = 90
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type"); request.setValue("Bearer \(configuration.accessToken)", forHTTPHeaderField: "Authorization")
+        request.httpBody = try JSONEncoder().encode(VehicleEvaluationRequest(images: images, profile: profile))
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard (response as? HTTPURLResponse)?.statusCode == 200, data.count < 128_000 else { throw URLError(.badServerResponse) }
+        let result = try JSONDecoder().decode(VehicleEvaluationResult.self, from: data)
+        guard result.isValid else { throw URLError(.cannotParseResponse) }
+        return result
     }
 }
 

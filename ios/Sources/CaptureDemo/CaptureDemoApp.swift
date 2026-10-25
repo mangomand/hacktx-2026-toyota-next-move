@@ -50,6 +50,8 @@ struct CaptureChecklistView: View {
                     GuidedCaptureView(model: model)
                 case .replay:
                     ProgressView("Loading replay…").task { model.runReplay() }
+                case .profile:
+                    VehicleProfileView(model: model)
                 case .results:
                     ResultsView(model: model)
                 }
@@ -120,6 +122,42 @@ private struct GuidedCaptureView: View {
                 }
             }
         }.foregroundStyle(.white).preferredColorScheme(.dark)
+    }
+}
+
+private struct VehicleProfileView: View {
+    @ObservedObject var model: CapturePresentationModel
+    @State private var ownership = VehicleEvaluationProfile.Ownership.owned
+    @State private var income = ""
+    @State private var mileage = ""
+    @State private var leasePayment = ""
+    @State private var leaseMonths = ""
+    @State private var year = "2022"
+    @State private var vehicleModel = "Camry"
+    @State private var trim = "Toyota"
+    var body: some View {
+        Form {
+            Section("About the vehicle") {
+                TextField("Vehicle year", text: $year)
+                TextField("Vehicle model", text: $vehicleModel)
+                TextField("Make / trim", text: $trim)
+                TextField("Current mileage", text: $mileage)
+            }
+            Section("Your finances") {
+                TextField("Annual gross income", text: $income)
+                Picker("Ownership", selection: $ownership) { Text("Owned / financed").tag(VehicleEvaluationProfile.Ownership.owned); Text("Leased").tag(VehicleEvaluationProfile.Ownership.leased) }
+                if ownership == .leased {
+                    TextField("Monthly lease payment", text: $leasePayment)
+                    TextField("Lease months remaining", text: $leaseMonths)
+                }
+            }
+            Section { Button(model.evaluationLoading ? "Evaluating…" : "Evaluate my Toyota") {
+                let profile = VehicleEvaluationProfile(ownership: ownership, annualIncome: Double(income) ?? 0, mileage: Int(mileage) ?? -1, leasePayment: Double(leasePayment), leaseMonthsRemaining: Int(leaseMonths), vehicleYear: Int(year) ?? 0, vehicleModel: vehicleModel, vehicleTrim: trim)
+                model.submitEvaluation(profile)
+            }.disabled(model.evaluationLoading) }
+            Text("GPT reviews the captured images for visible observations, then combines them with these details for a rough resale range and Toyota Financial Services planning guidance. This is not a mechanical diagnosis or a TFS quote.").font(.footnote).foregroundStyle(.secondary)
+            if let error = model.errorMessage { Text(error).foregroundStyle(.red) }
+        }.navigationTitle("Vehicle details")
     }
 }
 
@@ -385,6 +423,8 @@ private struct CoverageList: View {
 
 private struct ResultsView: View {
     @ObservedObject var model: CapturePresentationModel
+    @State private var selectedFinding: PresentationFinding?
+    @State private var showingFinding = false
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
@@ -398,7 +438,21 @@ private struct ResultsView: View {
                         .accessibilityLabel("Retry synthetic replay")
                 }
                 Text("3D vehicle scan and findings").font(.headline)
-                VehicleCoverageMap(progress: model.progress, findings: model.visionFindings).frame(height: 260)
+                ZStack {
+                    VehicleCoverageMap(progress: model.progress, findings: model.visionFindings)
+                    GeometryReader { proxy in
+                        ForEach(model.visionFindings) { finding in
+                            Button {
+                                selectedFinding = finding
+                                showingFinding = true
+                            } label: {
+                                Image(systemName: "exclamationmark").font(.caption.bold()).foregroundStyle(.white)
+                                    .frame(width: 28, height: 28).background(.red, in: Circle()).overlay(Circle().stroke(.white, lineWidth: 2))
+                            }.accessibilityLabel("Issue: \(finding.description)")
+                                .position(findingPosition(finding.region, in: proxy.size))
+                        }
+                    }
+                }.frame(height: 260)
                 if !model.visionAnalysis.isEmpty { Text(model.visionAnalysis).font(.subheadline) }
                 if !model.visionUnknownRegions.isEmpty {
                     Text("Unknown / needs another view: \(model.visionUnknownRegions.joined(separator: ", "))").font(.footnote).foregroundStyle(.orange)
@@ -443,6 +497,32 @@ private struct ResultsView: View {
                         .font(.footnote).foregroundStyle(.secondary)
                         .accessibilityLabel("Recommendation evidence: \(recommendation.basedOn.joined(separator: ", "))")
                 }
+                if let evaluation = model.evaluation {
+                    Text("Vehicle evaluation").font(.headline)
+                    HStack(spacing: 10) {
+                        EvaluationMetric(title: "Resale range", value: "$\(evaluation.resaleLow)–$\(evaluation.resaleHigh)")
+                        EvaluationMetric(title: "Visible issues", value: "\(evaluation.findings.count)")
+                    }
+                    HStack(spacing: 10) {
+                        EvaluationMetric(title: "Replacement", value: evaluation.replacementHorizon)
+                        if let burden = evaluation.leaseBurden { EvaluationMetric(title: "Payment burden", value: burden) }
+                    }
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Issues found").font(.subheadline.bold())
+                        if evaluation.findings.isEmpty { Text("No visible issues identified in the submitted evidence.").font(.footnote) }
+                        ForEach(evaluation.findings) { EvaluationFindingRow(finding: $0) }
+                    }.padding(12).background(Color.orange.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Ownership outlook").font(.subheadline.bold())
+                        Text(evaluation.longevityParagraph).font(.footnote)
+                    }.padding(12).background(Color.blue.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Toyota Financial Services next step").font(.subheadline.bold())
+                        Text(evaluation.financialServicesRecommendation).font(.footnote)
+                    }.padding(12).background(Color.green.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
+                    ForEach(evaluation.assumptions, id: \.self) { Text("Assumption · \($0)").font(.caption).foregroundStyle(.secondary) }
+                    ForEach(evaluation.uncertainty, id: \.self) { Text("Uncertainty · \($0)").font(.caption).foregroundStyle(.secondary) }
+                }
                 Button("Request human review") { model.requestHumanReview() }
                     .buttonStyle(.borderedProminent)
                     .accessibilityIdentifier("request-human-review")
@@ -452,6 +532,44 @@ private struct ResultsView: View {
                 CoverageList(model: model, title: "Coverage details").frame(minHeight: 420)
             }.padding()
         }
+        .alert("Visible issue", isPresented: $showingFinding) {
+            Button("Done", role: .cancel) { selectedFinding = nil }
+        } message: {
+            if let finding = selectedFinding {
+                Text("\(finding.description)\n\nRegion: \(finding.region)\nConfidence: \(finding.confidence * 100, specifier: "%.0f")%\nEvidence: \(finding.evidence)")
+            }
+        }
         .accessibilityElement(children: .contain)
+    }
+
+    private func findingPosition(_ region: String, in size: CGSize) -> CGPoint {
+        let p: [String: CGPoint] = ["front": CGPoint(x: size.width / 2, y: 30), "front-left": CGPoint(x: size.width * 0.25, y: 65), "left": CGPoint(x: size.width * 0.14, y: size.height / 2), "rear-left": CGPoint(x: size.width * 0.25, y: size.height - 55), "rear": CGPoint(x: size.width / 2, y: size.height - 28), "rear-right": CGPoint(x: size.width * 0.75, y: size.height - 55), "right": CGPoint(x: size.width * 0.86, y: size.height / 2), "front-right": CGPoint(x: size.width * 0.75, y: 65), "roof": CGPoint(x: size.width / 2, y: size.height / 2), "trunk": CGPoint(x: size.width / 2, y: size.height * 0.78)]
+        return p[region] ?? CGPoint(x: size.width / 2, y: size.height / 2)
+    }
+}
+
+private struct EvaluationFindingRow: View {
+    let finding: VehicleEvaluationFinding
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Circle().fill(.orange).frame(width: 8, height: 8).padding(.top, 5)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(finding.issue.capitalized).font(.subheadline.bold())
+                Text("\(finding.region.rawValue) · \(Int(finding.confidence * 100))% confidence").font(.caption).foregroundStyle(.secondary)
+                Text(finding.recommendedCheck).font(.caption)
+            }
+        }
+    }
+}
+
+private struct EvaluationMetric: View {
+    let title: String
+    let value: String
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(title.uppercased()).font(.caption2.bold()).foregroundStyle(.secondary)
+            Text(value).font(.subheadline.bold()).lineLimit(3).minimumScaleFactor(0.75)
+        }.frame(maxWidth: .infinity, minHeight: 58, alignment: .leading).padding(10)
+            .background(Color.secondary.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
     }
 }
