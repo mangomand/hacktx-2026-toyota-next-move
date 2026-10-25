@@ -23,6 +23,7 @@ struct CaptureDemoApp: App {
     }
 }
 
+@MainActor
 struct CaptureChecklistView: View {
     @StateObject private var model = CapturePresentationModel()
 
@@ -31,18 +32,24 @@ struct CaptureChecklistView: View {
             Group {
                 switch model.screen {
                 case .start:
-                    VStack(spacing: 20) {
-                        Text("Toyota Next Move").font(.largeTitle.bold()).minimumScaleFactor(0.8)
-                        Text("Guided exterior and interior capture").multilineTextAlignment(.center)
-                        Button("Start scan") { model.startScan() }.buttonStyle(.borderedProminent)
+                    ZStack(alignment: .bottom) {
+#if canImport(AVFoundation) && canImport(UIKit)
+                        StartCameraPreview()
+                            .ignoresSafeArea()
+#else
+                        Color.black.ignoresSafeArea()
+#endif
+                        LinearGradient(colors: [.clear, .black.opacity(0.78)], startPoint: .center, endPoint: .bottom)
+                            .ignoresSafeArea()
+                        Button("Start scan") { model.startScan() }
+                            .buttonStyle(.borderedProminent)
+                            .controlSize(.large)
                             .accessibilityIdentifier("start-scan")
                             .accessibilityLabel("Start a guided scan")
-                        Button("Run synthetic replay") { model.runReplay() }.buttonStyle(.bordered)
-                            .accessibilityIdentifier("run-replay")
-                            .accessibilityLabel("Run synthetic replay demo")
-                        Text("Synthetic replay is the safe fallback when camera access is unavailable.")
-                            .font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
-                    }.padding()
+                            .padding(.horizontal, 24)
+                            .padding(.bottom, 28)
+                    }
+                    .preferredColorScheme(.dark)
                 case .guided:
                     GuidedCaptureView(model: model)
                         .safeAreaInset(edge: .bottom) {
@@ -58,7 +65,7 @@ struct CaptureChecklistView: View {
                     ResultsView(model: model)
                 }
             }
-            .navigationTitle("Toyota Next Move")
+            .navigationTitle(model.screen == .start ? "" : "Toyota Next Move")
         }
     }
 }
@@ -380,6 +387,64 @@ private struct ARCameraScannerView: UIViewRepresentable {
 #endif
 
 #if canImport(AVFoundation) && canImport(UIKit)
+private struct StartCameraPreview: UIViewRepresentable {
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
+    func makeUIView(context: Context) -> PreviewView {
+        let view = PreviewView()
+        view.previewLayer.videoGravity = .resizeAspectFill
+        context.coordinator.attach(to: view)
+        return view
+    }
+
+    func updateUIView(_ view: PreviewView, context: Context) {
+        context.coordinator.attach(to: view)
+    }
+
+    static func dismantleUIView(_ view: PreviewView, coordinator: Coordinator) {
+        coordinator.stop()
+    }
+
+    final class Coordinator {
+        private let session = AVCaptureSession()
+        private var configured = false
+
+        func attach(to view: PreviewView) {
+            view.previewLayer.session = session
+            guard !configured else { return }
+            configured = true
+            let configure: () -> Void = { [weak self, weak view] in
+                guard let self, let view else { return }
+                guard AVCaptureDevice.authorizationStatus(for: .video) == .authorized,
+                      let device = AVCaptureDevice.default(for: .video),
+                      let input = try? AVCaptureDeviceInput(device: device),
+                      self.session.canAddInput(input) else { return }
+                self.session.beginConfiguration()
+                self.session.addInput(input)
+                self.session.commitConfiguration()
+                view.previewLayer.session = self.session
+                DispatchQueue.global(qos: .userInitiated).async { self.session.startRunning() }
+            }
+            switch AVCaptureDevice.authorizationStatus(for: .video) {
+            case .authorized: configure()
+            case .notDetermined:
+                AVCaptureDevice.requestAccess(for: .video) { granted in
+                    guard granted else { return }
+                    DispatchQueue.main.async(execute: configure)
+                }
+            default: break
+            }
+        }
+
+        func stop() { if session.isRunning { session.stopRunning() } }
+    }
+
+    final class PreviewView: UIView {
+        override class var layerClass: AnyClass { AVCaptureVideoPreviewLayer.self }
+        var previewLayer: AVCaptureVideoPreviewLayer { layer as! AVCaptureVideoPreviewLayer }
+    }
+}
+
 private struct LiveCapturePreview: UIViewRepresentable {
     let session: AVCaptureSession?
 
