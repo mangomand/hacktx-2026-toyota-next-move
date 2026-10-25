@@ -250,7 +250,9 @@ private struct VehicleCoverageMap: View {
         VStack(spacing: 4) {
             Group {
 #if canImport(WebKit)
-                VehicleGLBView(progress: progress).frame(maxWidth: .infinity)
+                VehicleGLBView(progress: progress)
+                    .frame(maxWidth: .infinity)
+                    .aspectRatio(16.0 / 9.0, contentMode: .fit)
 #else
                 SceneKitVehicleView(progress: progress, findings: findings)
 #endif
@@ -323,6 +325,7 @@ private struct VehicleGLBView: UIViewRepresentable {
         let view = WKWebView(frame: .zero, configuration: WKWebViewConfiguration())
         view.isOpaque = false
         view.backgroundColor = .clear
+        view.scrollView.contentInsetAdjustmentBehavior = .never
         view.scrollView.isScrollEnabled = false
         if let url = Bundle.main.url(forResource: "index", withExtension: "html", subdirectory: "VehicleViewer") {
             view.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
