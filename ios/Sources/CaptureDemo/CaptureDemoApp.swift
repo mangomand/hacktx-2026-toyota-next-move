@@ -86,44 +86,75 @@ private struct GuidedCaptureView: View {
 #else
                 Color.black.ignoresSafeArea()
 #endif
-                LinearGradient(colors: [.black.opacity(0.58), .clear], startPoint: .top, endPoint: .bottom)
-                    .frame(height: 190).ignoresSafeArea(edges: .top)
-                LinearGradient(colors: [.clear, .black.opacity(0.72)], startPoint: .top, endPoint: .bottom)
-                    .frame(height: 290).ignoresSafeArea(edges: .bottom).frame(maxHeight: .infinity, alignment: .bottom)
-                VStack(spacing: 0) {
+                LinearGradient(colors: [.black.opacity(0.62), .clear], startPoint: .top, endPoint: .bottom)
+                    .frame(height: 150)
+                    .ignoresSafeArea(edges: .top)
+                VStack(spacing: 12) {
                     HStack {
-                        Button("Cancel") { model.cancelScan() }.accessibilityLabel("Cancel scan")
+                        Button { model.cancelScan() } label: { Image(systemName: "xmark") }
+                            .accessibilityLabel("Cancel scan")
                         Spacer()
-                        Button("Finish") { model.finishScan() }.disabled(model.coveredCount == 0)
-                            .accessibilityLabel(model.coveredCount == 0 ? "Finish unavailable until evidence is captured" : "Finish scan")
-                    }.font(.headline).padding(.horizontal, 22).padding(.top, 8)
-                    Text(model.scanMessage).font(.body.weight(.semibold)).fixedSize(horizontal: false, vertical: true)
-                        .multilineTextAlignment(.center).padding(.horizontal, 18).padding(.vertical, 12)
-                        .frame(maxWidth: proxy.size.width - 42)
-                        .background(.ultraThinMaterial, in: Capsule()).id(model.scanMessage)
-                        .transition(.opacity.combined(with: .move(edge: .top)))
-                        .animation(.easeInOut(duration: 0.22), value: model.scanMessage)
-                        .padding(.top, 18).accessibilityAddTraits(.isHeader)
+                        Button { model.finishScan() } label: { Image(systemName: "checkmark") }
+                            .disabled(model.coveredCount == 0)
+                            .accessibilityLabel(model.coveredCount == 0 ? "Finish unavailable until a view is captured" : "Finish scan")
+                    }
+                    .font(.headline)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 8)
+                    GuidancePill(message: model.scanMessage)
+                        .padding(.horizontal, 16)
                     Spacer()
-                    VStack(spacing: 10) {
-                        VehicleCoverageMap(progress: model.progress)
-                            .vehicleObservationPulse(isVisible: model.vehicleMatchStatus == "Vehicle visible" && !pulseStatus.contains("no new coverage recorded") && !pulseStatus.contains("analyzing") && !pulseStatus.contains("paused") && !pulseStatus.contains("resumed") && !pulseStatus.contains("unavailable") && !pulseStatus.contains("failed") && !pulseStatus.contains("could not complete"))
-                            .frame(height: min(220, proxy.size.height * 0.27))
-                            .accessibilityLabel("Vehicle scan progress. Neutral surfaces are unseen; colored surfaces have been observed.")
-                        HStack(spacing: 18) {
-                            Button(model.isPaused ? "Resume" : "Pause") { model.togglePause() }
-                            Button("Retake") { model.retakeCurrent() }
-                            Button("Skip") { model.skipCurrent() }
-                        }.buttonStyle(.bordered).font(.subheadline).tint(.white)
-                        HStack {
-                            Image(systemName: model.cameraAvailable ? "camera.fill" : "play.rectangle.fill")
-                            Text(model.cameraAvailable ? "Live camera" : "Replay demo")
-                            Spacer(); Text("Move around the vehicle")
-                        }.font(.caption).foregroundStyle(.white.opacity(0.75))
-                    }.padding(.horizontal, 18).padding(.bottom, 14)
+                }
+                VStack(spacing: 12) {
+                    Spacer()
+                    VehicleCoverageMap(progress: model.progress, compact: true)
+                        .vehicleObservationPulse(isVisible: model.vehicleMatchStatus == "Vehicle visible" && !pulseStatus.contains("no new coverage recorded") && !pulseStatus.contains("analyzing") && !pulseStatus.contains("paused") && !pulseStatus.contains("resumed") && !pulseStatus.contains("unavailable") && !pulseStatus.contains("failed") && !pulseStatus.contains("could not complete"))
+                        .frame(height: min(180, proxy.size.height * 0.22))
+                        .padding(.horizontal, 28)
+                        .accessibilityLabel("3D vehicle progress indicator")
+                    HStack {
+                        Button { model.togglePause() } label: { Image(systemName: model.isPaused ? "play.fill" : "pause.fill") }
+                            .accessibilityLabel(model.isPaused ? "Resume scan" : "Pause scan")
+                        Button { model.retakeCurrent() } label: { Image(systemName: "arrow.counterclockwise") }
+                            .accessibilityLabel("Retake current view")
+                        Button { model.skipCurrent() } label: { Image(systemName: "forward.end.fill") }
+                            .accessibilityLabel("Skip current view")
+                        if !model.cameraAvailable {
+                            Button { model.useReplayFallback(); model.showReplay() } label: { Image(systemName: "film") }
+                                .accessibilityLabel("Use video replay")
+                        }
+                    }
+                    .buttonStyle(.bordered)
+                    .font(.subheadline)
+                    .padding(.bottom, 12)
                 }
             }
         }.foregroundStyle(.white).preferredColorScheme(.dark)
+    }
+}
+
+private struct GuidancePill: View {
+    let message: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: "sparkles").accessibilityHidden(true)
+            Text(message)
+                .font(.subheadline.weight(.semibold))
+                .lineLimit(2)
+                .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .foregroundStyle(.white)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(.ultraThinMaterial)
+        .clipShape(Capsule())
+        .overlay(Capsule().stroke(.white.opacity(0.2), lineWidth: 1))
+        .shadow(color: .black.opacity(0.22), radius: 12, y: 5)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Live guidance")
+        .accessibilityValue(message)
     }
 }
 
@@ -483,6 +514,7 @@ private struct VehicleCoverageMap: View {
     let progress: CaptureProgress
     var findings: [PresentationFinding] = []
     var vehicleObservationPulseVisible = false
+    var compact = false
     @State private var baseRotation: Double = 0
     @State private var dragRotation: Double = 0
     var body: some View {
@@ -491,7 +523,7 @@ private struct VehicleCoverageMap: View {
         VStack(spacing: 4) {
             Group {
 #if canImport(WebKit)
-                VehicleGLBView(progress: progress)
+                VehicleGLBView(progress: progress, compact: compact)
                     .frame(maxWidth: .infinity, minHeight: 140, maxHeight: .infinity)
                     .aspectRatio(16.0 / 9.0, contentMode: .fit)
 #else
@@ -507,18 +539,22 @@ private struct VehicleCoverageMap: View {
                         baseRotation += Double(value.translation.width) * 0.42
                         dragRotation = 0
                     })
-            Text("Drag to rotate").font(.caption2).foregroundStyle(.white.opacity(0.62))
+            if !compact {
+                Text("Drag to rotate").font(.caption2).foregroundStyle(.white.opacity(0.62))
+            }
         }
 #else
         GeometryReader { proxy in
             ZStack {
                 RoundedRectangle(cornerRadius: 55).fill(Color.gray.opacity(0.34)).overlay(RoundedRectangle(cornerRadius: 55).stroke(Color.white.opacity(0.35), lineWidth: 2)).rotation3DEffect(.degrees(8), axis: (x: 1, y: 0, z: 0))
                 RoundedRectangle(cornerRadius: 30).fill(Color.gray.opacity(0.2)).frame(width: proxy.size.width * 0.34, height: proxy.size.height * 0.62)
-                ForEach(CaptureRegion.allCases, id: \.self) { region in
-                    let position = mapPosition(region, in: proxy.size)
-                    Text(label(for: region)).font(.caption2.bold()).foregroundStyle(.white).padding(6)
-                        .background(color(for: progress[region])).clipShape(Capsule()).position(position)
-                        .accessibilityLabel("\(region.rawValue): \(progress[region].rawValue)")
+                if !compact {
+                    ForEach(CaptureRegion.allCases, id: \.self) { region in
+                        let position = mapPosition(region, in: proxy.size)
+                        Text(label(for: region)).font(.caption2.bold()).foregroundStyle(.white).padding(6)
+                            .background(color(for: progress[region])).clipShape(Capsule()).position(position)
+                            .accessibilityLabel("\(region.rawValue): \(progress[region].rawValue)")
+                    }
                 }
             }.padding(32)
         }
@@ -608,15 +644,95 @@ private struct VehicleObservationPulse: View {
 }
 
 #if canImport(WebKit) && canImport(UIKit)
+private final class VehicleViewerSchemeHandler: NSObject, WKURLSchemeHandler {
+    private let rootURL: URL
+
+    init(rootURL: URL) {
+        self.rootURL = rootURL.standardizedFileURL
+    }
+
+    func webView(_ webView: WKWebView, start urlSchemeTask: WKURLSchemeTask) {
+        guard let requestURL = urlSchemeTask.request.url,
+              let fileURL = fileURL(for: requestURL),
+              let data = try? Data(contentsOf: fileURL, options: [.mappedIfSafe]) else {
+            urlSchemeTask.didFailWithError(NSError(domain: NSURLErrorDomain, code: NSURLErrorFileDoesNotExist,
+                userInfo: [NSLocalizedDescriptionKey: "Vehicle viewer resource was not found."]))
+            return
+        }
+
+        let response = URLResponse(url: requestURL, mimeType: Self.mimeType(for: fileURL),
+            expectedContentLength: data.count, textEncodingName: Self.textEncodingName(for: fileURL))
+        urlSchemeTask.didReceive(response)
+        urlSchemeTask.didReceive(data)
+        urlSchemeTask.didFinish()
+    }
+
+    func webView(_ webView: WKWebView, stop urlSchemeTask: WKURLSchemeTask) {}
+
+    private func fileURL(for requestURL: URL) -> URL? {
+        guard requestURL.host == "bundle" else { return nil }
+        let path = requestURL.path.removingPercentEncoding ?? requestURL.path
+        guard path.hasPrefix("/"), !path.contains("\0") else { return nil }
+        let components = path.split(separator: "/", omittingEmptySubsequences: true).map(String.init)
+        guard !components.isEmpty,
+              components.allSatisfy({ $0 != "." && $0 != ".." && !$0.contains("\\") }) else { return nil }
+
+        let candidate = components.reduce(rootURL) { partial, component in
+            partial.appendingPathComponent(component, isDirectory: false)
+        }.standardizedFileURL
+        let rootPath = rootURL.path
+        let isDirectory = (try? candidate.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? true
+        guard candidate.path == rootPath || candidate.path.hasPrefix(rootPath + "/"),
+              FileManager.default.fileExists(atPath: candidate.path),
+              !isDirectory else { return nil }
+        return candidate
+    }
+
+    private static func mimeType(for url: URL) -> String {
+        switch url.pathExtension.lowercased() {
+        case "html": return "text/html"
+        case "js", "mjs": return "text/javascript"
+        case "css": return "text/css"
+        case "json": return "application/json"
+        case "glb": return "model/gltf-binary"
+        case "png": return "image/png"
+        case "jpg", "jpeg": return "image/jpeg"
+        case "webp": return "image/webp"
+        case "svg": return "image/svg+xml"
+        case "woff": return "font/woff"
+        case "woff2": return "font/woff2"
+        case "ttf": return "font/ttf"
+        default: return "application/octet-stream"
+        }
+    }
+
+    private static func textEncodingName(for url: URL) -> String? {
+        switch url.pathExtension.lowercased() {
+        case "html", "js", "mjs", "css", "json", "svg": return "utf-8"
+        default: return nil
+        }
+    }
+}
+
 /// Loads the authored Blender GLB through the bundled WebGL material viewer.
 /// This keeps the exact mesh/material reveal authored in Vision assets instead
 /// of substituting the old rounded-box SceneKit placeholder.
 private struct VehicleGLBView: UIViewRepresentable {
     let progress: CaptureProgress
+    let compact: Bool
+
     func makeCoordinator() -> Coordinator { Coordinator() }
 
     func makeUIView(context: Context) -> WKWebView {
         let configuration = WKWebViewConfiguration()
+        guard let indexURL = Bundle.main.url(forResource: "index", withExtension: "html", subdirectory: "VehicleViewer") else {
+            return WKWebView(frame: .zero, configuration: configuration)
+        }
+        configuration.setURLSchemeHandler(VehicleViewerSchemeHandler(rootURL: indexURL.deletingLastPathComponent()), forURLScheme: "toyota-viewer")
+        if compact {
+            let script = WKUserScript(source: "const s=document.createElement('style');s.textContent='header,.controls,#state,footer,#anchor,#loading,#error{display:none!important}';document.documentElement.appendChild(s);", injectionTime: .atDocumentEnd, forMainFrameOnly: true)
+            configuration.userContentController.addUserScript(script)
+        }
         configuration.userContentController.add(context.coordinator, name: "vehicleStudyReady")
         let view = WKWebView(frame: .zero, configuration: configuration)
         context.coordinator.webView = view
@@ -625,9 +741,7 @@ private struct VehicleGLBView: UIViewRepresentable {
         view.backgroundColor = .clear
         view.scrollView.contentInsetAdjustmentBehavior = .never
         view.scrollView.isScrollEnabled = false
-        if let url = Bundle.main.url(forResource: "index", withExtension: "html", subdirectory: "VehicleViewer") {
-            view.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
-        }
+        view.load(URLRequest(url: URL(string: "toyota-viewer://bundle/index.html")!))
         return view
     }
     func updateUIView(_ view: WKWebView, context: Context) {
@@ -665,94 +779,167 @@ private struct VehicleGLBView: UIViewRepresentable {
 }
 #endif
 
-private struct CoverageList: View {
+private struct ResultsView: View {
     @ObservedObject var model: CapturePresentationModel
-    let title: String
+    @State private var leaseChoice = "Leased"
+    @State private var incomeChoice = "$50–100k"
+    @State private var accidentChoice = "None"
+    @State private var mileage = ""
+    @State private var showSheet = false
+    @State private var showRecommendation = false
+    @FocusState private var mileageFocused: Bool
+
+    private let ink = Color(red: 0.06, green: 0.07, blue: 0.08)
+    private let warm = Color(red: 0.91, green: 0.68, blue: 0.32)
+
     var body: some View {
-        List(CaptureRegion.allCases, id: \.self) { region in
-            HStack {
-                Text(region.rawValue)
-                Spacer()
-                Text(model.progress[region].rawValue)
-                    .foregroundStyle(model.progress[region] == .covered ? .green : .orange)
-                    .accessibilityLabel(region.rawValue)
-                    .accessibilityValue(model.progress[region].rawValue)
+        ZStack(alignment: .bottom) {
+            ink.ignoresSafeArea()
+            RadialGradient(colors: [Color(red: 0.16, green: 0.19, blue: 0.23).opacity(0.8), ink], center: .center, startRadius: 40, endRadius: 520)
+                .ignoresSafeArea()
+                .opacity(showSheet ? 0.72 : 0.48)
+            PostScanVehicleHero(progress: model.progress)
+                .ignoresSafeArea()
+                .scaleEffect(showSheet ? 1 : 0.84)
+                .opacity(showSheet ? 1 : 0)
+                .animation(.easeOut(duration: 0.72), value: showSheet)
+            VStack(spacing: 0) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("NEXT MOVE").font(.caption2.weight(.semibold)).tracking(2.2).foregroundStyle(warm)
+                        Text("Your vehicle,\nmade actionable.").font(.system(size: 30, weight: .semibold, design: .rounded)).foregroundStyle(.white)
+                    }
+                    Spacer()
+                    Image(systemName: "sparkles").font(.title3).foregroundStyle(warm)
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 18)
+                .opacity(showSheet ? 1 : 0)
+                .offset(y: showSheet ? 0 : 18)
+                .animation(.easeOut(duration: 0.48).delay(0.16), value: showSheet)
+
+                ScrollView(showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: 18) {
+                        Text("A few details help us shape your next step.")
+                            .font(.subheadline)
+                            .foregroundStyle(.white.opacity(0.68))
+                        PostScanChoiceRow(title: "Ownership", choices: ["Leased", "Financed", "Owned"], selection: $leaseChoice)
+                        PostScanChoiceRow(title: "Annual income", choices: ["Under $50k", "$50–100k", "$100k+"], selection: $incomeChoice)
+                        PostScanChoiceRow(title: "Accident history", choices: ["None", "One", "Multiple"], selection: $accidentChoice)
+                        VStack(alignment: .leading, spacing: 9) {
+                            Text("Current mileage").font(.caption.weight(.semibold)).foregroundStyle(.white.opacity(0.68))
+                            HStack(spacing: 10) {
+                                Image(systemName: "gauge.with.dots.needle.67percent").foregroundStyle(warm)
+                                TextField("e.g. 42,000", text: $mileage)
+#if canImport(UIKit)
+                                    .keyboardType(.numberPad)
+#endif
+                                    .focused($mileageFocused)
+                                    .foregroundStyle(.white)
+                                    .font(.system(size: 17, weight: .medium, design: .rounded))
+                                    .accessibilityLabel("Current mileage")
+                            }
+                            .padding(.horizontal, 14).frame(height: 50)
+                            .background(.white.opacity(0.09), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+                            .overlay(RoundedRectangle(cornerRadius: 15, style: .continuous).stroke(.white.opacity(0.12)))
+                        }
+                        Button {
+                            mileageFocused = false
+                            withAnimation(.easeOut(duration: 0.52)) { showRecommendation = true }
+                        } label: {
+                            HStack {
+                                Text("Generate next step").font(.system(size: 16, weight: .semibold, design: .rounded))
+                                Spacer()
+                                Image(systemName: "arrow.up.right").font(.headline.weight(.semibold))
+                            }
+                            .foregroundStyle(ink)
+                            .padding(.horizontal, 18).frame(height: 54)
+                            .background(warm, in: RoundedRectangle(cornerRadius: 17, style: .continuous))
+                        }
+                        .accessibilityIdentifier("generate-next-step")
+                        .disabled(mileage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        .opacity(mileage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.45 : 1)
+                        if showRecommendation { PostScanRecommendationCard(lease: leaseChoice, mileage: mileage, accent: warm).transition(.move(edge: .bottom).combined(with: .opacity)) }
+                    }
+                    .padding(.horizontal, 24).padding(.top, 20).padding(.bottom, 28)
+                }
+                .frame(maxHeight: 440)
+                .background(.ultraThinMaterial.opacity(0.96), in: UnevenRoundedRectangle(topLeadingRadius: 30, topTrailingRadius: 30))
+                .overlay(alignment: .top) { Capsule().fill(.white.opacity(0.28)).frame(width: 38, height: 4).padding(.top, 9) }
+                .offset(y: showSheet ? 0 : 420)
+                .opacity(showSheet ? 1 : 0)
+                .animation(.easeOut(duration: 0.68).delay(0.28), value: showSheet)
             }
         }
-        .overlay(alignment: .top) { Text("\(model.coveredCount) of 12 covered").font(.headline).padding(.top, 8) }
-        .navigationTitle(title)
+        .preferredColorScheme(.dark)
+#if os(iOS)
+        .toolbar(.hidden, for: .navigationBar)
+        .navigationBarBackButtonHidden()
+#endif
+        .onAppear { withAnimation { showSheet = true } }
     }
 }
 
-private struct ResultsView: View {
-    @ObservedObject var model: CapturePresentationModel
+private struct PostScanVehicleHero: View {
+    let progress: CaptureProgress
+
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                Text("Scan results").font(.title.bold())
-                Text("Coverage: \(model.coveredCount) of 12 regions")
-                Text(model.replayStatus).font(.footnote).foregroundStyle(.secondary)
-                if let error = model.errorMessage {
-                    Text(error).foregroundStyle(.red)
-                    Button("Retry synthetic replay") { model.showReplay() }
-                        .buttonStyle(.borderedProminent)
-                        .accessibilityLabel("Retry synthetic replay")
-                }
-                Text("3D vehicle scan and findings").font(.headline)
-                VehicleCoverageMap(progress: model.progress, findings: model.visionFindings).frame(height: 260)
-                if !model.visionAnalysis.isEmpty { Text(model.visionAnalysis).font(.subheadline) }
-                if !model.visionUnknownRegions.isEmpty {
-                    Text("Unknown / needs another view: \(model.visionUnknownRegions.joined(separator: ", "))").font(.footnote).foregroundStyle(.orange)
-                }
-                ForEach(model.visionRegions) { region in
-                    HStack {
-                        Text(region.id)
-                        Spacer()
-                        Text("\(region.state), \(region.quality)")
+#if canImport(WebKit) && canImport(UIKit)
+        VehicleGLBView(progress: progress, compact: false)
+#else
+        Color.clear
+#endif
+    }
+}
+
+private struct PostScanChoiceRow: View {
+    let title: String
+    let choices: [String]
+    @Binding var selection: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 9) {
+            Text(title).font(.caption.weight(.semibold)).foregroundStyle(.white.opacity(0.68))
+            HStack(spacing: 8) {
+                ForEach(choices, id: \.self) { choice in
+                    Button { withAnimation(.easeInOut(duration: 0.18)) { selection = choice } } label: {
+                        Text(choice).font(.system(size: 13, weight: .semibold, design: .rounded)).lineLimit(1).minimumScaleFactor(0.72)
+                            .foregroundStyle(selection == choice ? Color.black : .white.opacity(0.75))
+                            .frame(maxWidth: .infinity).frame(height: 42)
+                            .background(selection == choice ? Color(red: 0.91, green: 0.68, blue: 0.32) : .white.opacity(0.08), in: RoundedRectangle(cornerRadius: 13, style: .continuous))
                     }
-                    .accessibilityElement(children: .combine)
-                    .accessibilityLabel("\(region.id.replacingOccurrences(of: "-", with: " ").capitalized), \(region.state.replacingOccurrences(of: "_", with: " ")), \(region.quality) quality. \(region.note)")
+                    .accessibilityAddTraits(selection == choice ? .isSelected : [])
                 }
-                if !model.visionFindings.isEmpty {
-                    Text("Evidence-backed findings").font(.headline)
-                    ForEach(Array(model.visionFindings.enumerated()), id: \.element.id) { index, finding in
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("\(index + 1). \(finding.description)").font(.body.bold())
-                            Text("Region: \(finding.region) · confidence \(finding.confidence, specifier: "%.2f")")
-                            Text("Evidence: \(finding.evidence)").font(.footnote).foregroundStyle(.secondary)
-                        }.accessibilityElement(children: .combine)
-                    }
-                }
-                Text(model.findingSummary)
-                if let description = model.findingDescription {
-                    Text(description)
-                    Text(model.findingEvidenceLabel ?? "Demo · synthetic image")
-                        .font(.footnote).foregroundStyle(.secondary)
-                    if let check = model.findingRecommendedCheck {
-                        Text("Recommended check: \(check)")
-                            .font(.subheadline)
-                    }
-                }
-                Text("Recommended next move").font(.headline)
-                if let recommendation = model.recommendation {
-                    Text(recommendation.nextMove).font(.title3.bold())
-                    Text(recommendation.rationale)
-                    Text("Confidence is limited; this is a bounded synthetic scenario.")
-                        .font(.footnote).foregroundStyle(.secondary)
-                    ForEach(recommendation.caveats, id: \.self) { Text("Caveat: \($0)").font(.footnote).foregroundStyle(.secondary) }
-                    Text("Based on: \(recommendation.basedOn.joined(separator: ", "))")
-                        .font(.footnote).foregroundStyle(.secondary)
-                        .accessibilityLabel("Recommendation evidence: \(recommendation.basedOn.joined(separator: ", "))")
-                }
-                Button("Request human review") { model.requestHumanReview() }
-                    .buttonStyle(.borderedProminent)
-                    .accessibilityIdentifier("request-human-review")
-                if let status = model.humanActionStatus {
-                    Text(status)
-                }
-                CoverageList(model: model, title: "Coverage details").frame(minHeight: 420)
-            }.padding()
+            }
         }
-        .accessibilityElement(children: .contain)
+    }
+}
+
+private struct PostScanRecommendationCard: View {
+    let lease: String
+    let mileage: String
+    let accent: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 13) {
+            HStack {
+                Label("NEXT BEST STEP", systemImage: "sparkles")
+                    .font(.caption.weight(.bold)).tracking(1.2).foregroundStyle(accent)
+                Spacer()
+                Text("READY").font(.caption2.weight(.bold)).tracking(1.1).foregroundStyle(.white.opacity(0.5))
+            }
+            Text(lease == "Leased" ? "Start a lease-end review" : "Book a trade-in review")
+                .font(.system(size: 23, weight: .semibold, design: .rounded)).foregroundStyle(.white)
+            Text(lease == "Leased" ? "Your current vehicle and mileage suggest planning early gives you the most flexibility. Compare buyout, renewal, and upgrade paths with a Toyota specialist." : "Your scan is a strong starting point for a value conversation. Bring the vehicle and mileage to a Toyota specialist for a personalized upgrade path.")
+                .font(.subheadline).foregroundStyle(.white.opacity(0.72)).fixedSize(horizontal: false, vertical: true)
+            HStack(spacing: 7) {
+                Image(systemName: "checkmark.circle.fill").foregroundStyle(accent)
+                Text("Based on your \(mileage.isEmpty ? "reported" : mileage) miles and scan")
+                    .font(.caption).foregroundStyle(.white.opacity(0.62))
+            }
+        }
+        .padding(18)
+        .background(Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 21, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 21, style: .continuous).stroke(accent.opacity(0.34)))
     }
 }

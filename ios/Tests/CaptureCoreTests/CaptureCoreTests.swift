@@ -185,6 +185,13 @@ extension CaptureCoreTests {
         XCTAssertTrue(accumulator.ingest(.init(frameID: "4", vehiclePresent: true, usability: .usable, regions: [region], guidance: "Front visible")).isEmpty)
     }
 
+    func testModelGuidanceIsActionableOnlyForUsableVehicleObservations() {
+        let observation = VehicleObservation(frameID: "guidance", vehiclePresent: true, usability: .usable, regions: [], guidance: "  Hold the front view\nbriefly.  ")
+        XCTAssertEqual(VehicleGuidance.actionable(from: observation), "Hold the front view briefly.")
+        let noVehicle = VehicleObservation(frameID: "no-car", vehiclePresent: false, usability: .unusable, regions: [], guidance: "Point at the car.")
+        XCTAssertNil(VehicleGuidance.actionable(from: noVehicle))
+    }
+
     func testMalformedAndLowConfidenceModelOutputCannotConfirmCoverage() throws {
         var accumulator = VehicleObservationAccumulator()
         for id in ["1", "2"] {

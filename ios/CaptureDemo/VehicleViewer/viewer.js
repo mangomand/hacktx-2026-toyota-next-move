@@ -14,7 +14,7 @@ function viewportSize(){
 }
 const viewport=viewportSize();
 renderer.setSize(viewport.width,viewport.height,false);
-renderer.setClearColor(0x141517,1);
+renderer.setClearColor(0x141517,0);
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure=1.1;
 document.body.prepend(renderer.domElement);
