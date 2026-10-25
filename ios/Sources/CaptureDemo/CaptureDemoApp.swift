@@ -40,7 +40,7 @@ struct CaptureChecklistView: View {
                         Button("Start scan") { model.startScan() }.buttonStyle(.borderedProminent)
                             .accessibilityIdentifier("start-scan")
                             .accessibilityLabel("Start a guided scan")
-                        Button("Run synthetic replay") { model.runReplay() }.buttonStyle(.bordered)
+                        Button("Run synthetic replay") { model.showReplay() }.buttonStyle(.bordered)
                             .accessibilityIdentifier("run-replay")
                             .accessibilityLabel("Run synthetic replay demo")
                         Text("Synthetic replay is the safe fallback when camera access is unavailable.")
@@ -54,6 +54,9 @@ struct CaptureChecklistView: View {
                     ResultsView(model: model)
                 }
             }
+            // Give each presentation state a fresh identity so a cancelled camera
+            // session cannot leave its guided controls layered over the start view.
+            .id(model.screen)
             .navigationTitle("Toyota Next Move")
         }
     }
